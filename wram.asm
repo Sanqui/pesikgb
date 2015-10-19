@@ -9,6 +9,12 @@ wMenuStartx: ds 1
 wMenuOptionMode: ds 1
 wMenuCallbacks: ds 2
 
+wCameraY: ds 2
+wCameraX: ds 2
+wDirtyUp: ds 1
+wDirtyDown: ds 1
+wDirtyLeft: ds 1
+wDirtyRight: ds 1
 
 
 SECTION "vwf",WRAM0[$c400]

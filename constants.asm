@@ -224,6 +224,24 @@ calljoy: MACRO
     call nz, \2
     ENDM
 
+dec16: MACRO
+    ld hl, \1
+    dec [hl]
+    jr nz, .done\@
+    inc hl
+    dec [hl]
+.done\@
+    ENDM
+    
+inc16: MACRO
+    ld hl, \1
+    inc [hl]
+    jr nz, .done\@
+    inc hl
+    inc [hl]
+.done\@
+    ENDM
+
 
 H_TIMER EQU $FFF0
 H_RNG1 EQU $FFF1
