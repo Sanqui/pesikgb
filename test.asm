@@ -243,13 +243,13 @@ StartGame:
     dec16 wCameraY
     ld a, [wCameraY]
     and %00000111
-    call nz, ScrollUp
+    call z, ScrollUp
     ret
 .down
     inc16 wCameraY
     ld a, [wCameraY]
     and %00000111
-    call nz, ScrollDown
+    call z, ScrollDown
     ret
 .left
     dec16 wCameraX
@@ -287,19 +287,49 @@ ScrollVert:
     ld a, h
     and %00000011
     ld h, a
+    ld a, [wCameraX]
+    srl a
+    srl a
+    srl a
+    and %00011111
+    ld c, a
+    ld b, 0
+    add hl, bc
     ld bc, $9800
     add hl, bc
     push hl
     pop de
     pop hl
+    sla l
+    rl h
     ld bc, Tilemap
     add hl, bc
+    lda c, [wCameraX]
+    lda b, [wCameraX+1]
+    sra b
+    rr c
+    sra b
+    rr c
+    sra b
+    rr c
+    add hl, bc
     
-rept 32
+    ld b, $15
+.copyloop
     ld a, [hli]
     ld [de], a
     inc de
-endr
+    ld a, e
+    and %00011111
+    jr nz, .decb
+    ld a, e
+    sub %00100000
+    ld e, a
+    jr nc, .decb
+    dec d
+.decb
+    dec b
+    jr nz, .copyloop
     ;srl h
     ;rr l
     ret
