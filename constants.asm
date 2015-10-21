@@ -218,6 +218,12 @@ jrjoynew: MACRO
     jr nz, \2
     ENDM
     
+jpjoynew: MACRO
+    ld a, [H_JOYNEW]
+    bit \1, a
+    jp nz, \2
+    ENDM
+    
 calljoy: MACRO
     ld a, [H_JOY]
     bit \1, a
@@ -225,20 +231,24 @@ calljoy: MACRO
     ENDM
 
 dec16: MACRO
-    ld hl, \1
-    dec [hl]
-    jr nz, .done\@
-    inc hl
-    dec [hl]
+    ld a, [\1]
+    sub a, 1
+    ld [\1], a
+    jr nc, .done\@
+    ld a, [\1+1]
+    sbc a, 0
+    ld [\1+1], a
 .done\@
     ENDM
     
 inc16: MACRO
-    ld hl, \1
-    inc [hl]
-    jr nz, .done\@
-    inc hl
-    inc [hl]
+    ld a, [\1]
+    add a, 1
+    ld [\1], a
+    jr nc, .done\@
+    ld a, [\1+1]
+    adc a, 0
+    ld [\1+1], a
 .done\@
     ENDM
 

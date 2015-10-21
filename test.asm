@@ -52,6 +52,8 @@ VBlankHandler:
     push de
     push hl
     call FastVblank
+    call VCopyRow
+    call VCopyCol
     call $FF80
     call ReadJoypadRegister
     ld hl, H_TIMER
@@ -104,7 +106,55 @@ endr
     ld h, a
     ld sp, hl
     ret
-    
+
+VCopyRow:
+    ld a, [wCopyRowAmount]
+    and a
+    ret z
+    ld b, a
+    lda e, [wCopyRowDest]
+    lda d, [wCopyRowDest+1]
+    ld hl, wCopyRowData
+.copyloop
+    ld a, [hli]
+    ld [de], a
+    inc de
+    ld a, e
+    and %00011111
+    jr nz, .decb
+    ld a, e
+    sub %00100000
+    ld e, a
+    jr nc, .decb
+    dec d
+.decb
+    dec b
+    jr nz, .copyloop
+    lda [wCopyRowAmount], b
+    ret
+
+VCopyCol:
+    ld a, [wCopyColAmount]
+    and a
+    ret z
+    ld b, a
+    lda e, [wCopyColDest]
+    lda d, [wCopyColDest+1]
+    ld hl, wCopyColData
+.copyloop
+    ld a, [hli]
+    ld [de], a
+    ld a, e
+    add 32
+    ld e, a
+    jr nc, .decb
+    inc d
+.decb
+    dec b
+    jr nz, .copyloop
+    lda [wCopyColAmount], b
+    ret
+
 INCLUDE "common.asm"
 INCLUDE "vwf.asm"
 
@@ -223,6 +273,18 @@ StartGame:
     call DisableLCD
     
     copy $9010, Tileset
+    ld b, 0
+    ld c, 0
+.loadtilemaploop
+    push bc
+    call ScrollVert
+    call VCopyRow
+    pop bc
+    ld a, c
+    add 8
+    ld c, a
+    cp 160-8
+    jr c, .loadtilemaploop
     ;copy $9800, Tilemap
     
     call EnableLCD
@@ -236,11 +298,18 @@ StartGame:
     ;call ScrollVert
     lda [H_SCY], [wCameraY]
     lda [H_SCX], [wCameraX]
-    jrjoynew START, .return
+    jpjoynew START, .return
     jr .loop
 
 .up
     dec16 wCameraY
+    ld a, [wCameraY+1]
+    cp $ff
+    jr nz, .notneg
+    xor a
+    ld [wCameraY], a
+    ld [wCameraY+1],a
+.notneg
     ld a, [wCameraY]
     and %00000111
     call z, ScrollUp
@@ -253,9 +322,22 @@ StartGame:
     ret
 .left
     dec16 wCameraX
+    ld a, [wCameraX+1]
+    cp $ff
+    jr nz, .notnegx
+    xor a
+    ld [wCameraX], a
+    ld [wCameraX+1],a
+.notnegx
+    ld a, [wCameraX]
+    and %00000111
+    call z, ScrollLeft
     ret
 .right
     inc16 wCameraX
+    ld a, [wCameraX]
+    and %00000111
+    call z, ScrollRight
     ret
     
 .return
@@ -314,24 +396,94 @@ ScrollVert:
     rr c
     add hl, bc
     
-    ld b, $15
+    lda [wCopyRowDest], e
+    lda [wCopyRowDest+1], d
+    ld de, wCopyRowData
+    
+    ld bc, $15
+    call CopyData
+    
+    lda [wCopyRowAmount], $15
+    ret
+
+
+ScrollLeft:
+    ld bc, -1
+    jr ScrollHor
+ScrollRight:
+    ld bc, 160
+    ld b, a
+
+ScrollHor:
+    lda l, [wCameraY]
+    lda h, [wCameraY+1]
+    ld a, l
+    and %11111000
+    ld l, a
+    
+    ; *4
+    sla l
+    rl h
+    sla l
+    rl h
+    
+    push bc ; off
+    push hl
+    ld a, h
+    and %00000011
+    ld h, a
+    ld a, [wCameraX]
+    add c
+    srl a
+    srl a
+    srl a
+    and %00011111
+    ld c, a
+    ld b, 0
+    add hl, bc
+    ld bc, $9800
+    add hl, bc
+    push hl
+    pop de
+    pop hl
+    sla l
+    rl h
+    ld bc, Tilemap
+    add hl, bc
+    pop bc
+    push hl
+    lda l, [wCameraX]
+    lda h, [wCameraX+1]
+    add hl, bc
+    push hl
+    pop bc
+    pop hl
+    
+    sra b
+    rr c
+    sra b
+    rr c
+    sra b
+    rr c
+    add hl, bc
+    
+    lda [wCopyColDest], e
+    lda [wCopyColDest+1], d
+    ld de, wCopyColData
+    
+    ld b, $13
 .copyloop
-    ld a, [hli]
+    ld a, [hl]
     ld [de], a
     inc de
-    ld a, e
-    and %00011111
-    jr nz, .decb
-    ld a, e
-    sub %00100000
-    ld e, a
-    jr nc, .decb
-    dec d
-.decb
+    push bc
+    ld bc, 64
+    add hl, bc
+    pop bc
     dec b
     jr nz, .copyloop
-    ;srl h
-    ;rr l
+    
+    lda [wCopyColAmount], $13
     ret
     
 

@@ -11,10 +11,15 @@ wMenuCallbacks: ds 2
 
 wCameraY: ds 2
 wCameraX: ds 2
-wDirtyUp: ds 1
-wDirtyDown: ds 1
-wDirtyLeft: ds 1
-wDirtyRight: ds 1
+;wScrollLeftOff: ds 2
+
+wCopyRowAmount: ds 1
+wCopyRowDest: ds 2
+wCopyRowData: ds 32
+
+wCopyColAmount: ds 1
+wCopyColDest: ds 2
+wCopyColData: ds 32
 
 
 SECTION "vwf",WRAM0[$c400]
