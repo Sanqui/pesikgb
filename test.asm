@@ -149,6 +149,13 @@ VCopyCol:
     ld e, a
     jr nc, .decb
     inc d
+    ld a, d
+    cp $9c
+    jr nz, .decb
+    dec d
+    dec d
+    dec d
+    dec d
 .decb
     dec b
     jr nz, .copyloop
