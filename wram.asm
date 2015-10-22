@@ -21,8 +21,13 @@ wCopyColAmount: ds 1
 wCopyColDest: ds 2
 wCopyColData: ds 32
 
+wTmpSpriteY: ds 1
+wTmpSpriteX: ds 1
 
-SECTION "vwf",WRAM0[$c400]
+SECTION "Map Objects",WRAM0[$c400]
+wMapObject0: ds 8
+
+SECTION "vwf",WRAM0[$c500]
 wVWFLetterNum:
     ds 1
 wVWFChar:
@@ -48,5 +53,5 @@ wVWFBuildArea2:
     ds 8
 wVWFBuildArea3:
     ds 8
-SECTION "vwfcopy",WRAM0[$c440]
+SECTION "vwfcopy",WRAM0[$c540]
 wVWFCopyArea:

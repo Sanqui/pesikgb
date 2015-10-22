@@ -178,7 +178,7 @@ Start:
     ld [H_SCX], a
     ld [H_SCY], a
     
-    ld a, %11000011
+    ld a, %11000111
     ld [rLCDC], a
     ld a, %00001000
     ld [rSTAT], a
@@ -245,9 +245,9 @@ NewGameMenu:
     db $30 ; tile gfx index
     db 0 ; options are inlined
     db 3 ; number of options
-    db "Tutorial?@"
-    db "Start?@"
-    db "Options?@"
+    db "something@"
+    db "Start@"
+    db "dunno@"
     db 1 ; callbacks
     dw Tutorial
     dw StartGame
@@ -255,8 +255,8 @@ NewGameMenu:
 
 InitGame:
     call ClearTilemap
-    printstatic $00, $0f, 0, 6, "Flora GB!@"
-    printstatic $10, $20, $11, 0, "Very early test build. By Sanky.@"
+    printstatic $00, $0f, 0, 6, "It's a game!@"
+    printstatic $10, $20, $11, 0, "Sanky 2015@"
     xor a
     ld [H_SCX], a
     ld [H_SCY], a
@@ -267,7 +267,7 @@ InitGame:
     jr .here
 
 Tutorial:
-    printstatic $50, $10, $8, 0, "Tutorial not implemented...@"
+    printstatic $50, $10, $8, 0, "N/A...@"
     refreshscreen
     ret
 
@@ -280,6 +280,7 @@ StartGame:
     call DisableLCD
     
     copy $9010, Tileset
+    copy $8000, Melodingo
     ld b, 0
     ld c, 0
 .loadtilemaploop
@@ -294,6 +295,12 @@ StartGame:
     jr c, .loadtilemaploop
     ;copy $9800, Tilemap
     
+    ld hl, wMapObject0
+    lda [hli], 120+100
+    lda [hli], 0
+    lda [hli], 80+100
+    lda [hli], 0
+    
     call EnableLCD
     
 .loop
@@ -306,6 +313,7 @@ StartGame:
     lda [H_SCY], [wCameraY]
     lda [H_SCX], [wCameraX]
     jpjoynew START, .return
+    call UpdateSprites
     jr .loop
 
 .up
@@ -380,6 +388,7 @@ ScrollVert:
     srl a
     srl a
     srl a
+    dec a
     and %00011111
     ld c, a
     ld b, 0
@@ -401,16 +410,17 @@ ScrollVert:
     rr c
     sra b
     rr c
+    dec bc
     add hl, bc
     
     lda [wCopyRowDest], e
     lda [wCopyRowDest+1], d
     ld de, wCopyRowData
     
-    ld bc, $15
+    ld bc, $16
     call CopyData
     
-    lda [wCopyRowAmount], $15
+    lda [wCopyRowAmount], $16
     ret
 
 
@@ -492,10 +502,76 @@ ScrollHor:
     
     lda [wCopyColAmount], $13
     ret
+
+UpdateSprites:
+    fillmemory W_OAM, 0, 4*$28
     
+    
+    ld de, wMapObject0
+    ld a, [wCameraY]
+    xor $ff
+    ld c, a
+    ld a, [wCameraY+1]
+    xor $ff
+    ld b, a
+    lda l, [de]
+    inc de
+    lda h, [de]
+    inc de
+    add hl, bc
+    ld a, h
+    and a
+    jr nz, .skip2
+    ld a, l
+    cp 160
+    jr nc, .skip2
+    ld [wTmpSpriteY], a
+    
+    ld a, [wCameraX]
+    xor $ff
+    ld c, a
+    ld a, [wCameraX+1]
+    xor $ff
+    ld b, a
+    lda l, [de]
+    inc de
+    lda h, [de]
+    inc de
+    add hl, bc
+    ld a, h
+    and a
+    jr nz, .skip
+    ld a, l
+    cp 144
+    jr nc, .skip
+    ld [wTmpSpriteX], a
+    
+    ld hl, W_OAM
+    lda [hli], [wTmpSpriteY]
+    lda [hli], [wTmpSpriteX]
+    xor a
+    ld [hli], a
+    ld [hli], a
+    
+    lda [hli], [wTmpSpriteY]
+    ld a, [wTmpSpriteX]
+    add 8
+    ld [hli], a
+    ld a, 2
+    ld [hli], a
+    xor a
+    ld [hli], a
+    jr .end
+    
+.skip2
+    inc de
+    inc de
+.skip
+.end
+    ret
 
 Options:
-    printstatic $50, $10, $8, 0, "Options not implemented...@"
+    printstatic $50, $10, $8, 0, "Just testing menu...@"
     refreshscreen
     ret
 
@@ -506,3 +582,7 @@ TilesetEnd
 Tilemap:
     INCBIN "maps/test.bin"
 TilemapEnd
+
+Melodingo:
+    INCBIN "gfx/melodingo_small.interleave.2bpp"
+MelodingoEnd
