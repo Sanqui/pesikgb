@@ -310,13 +310,32 @@ StartGame:
     calljoy LEFT, .left
     calljoy RIGHT, .right
     ;call ScrollVert
+    call CameraTowardsSprite
+    call UpdateSprites
     lda [H_SCY], [wCameraY]
     lda [H_SCX], [wCameraX]
     jpjoynew START, .return
-    call UpdateSprites
     jr .loop
-
+    
 .up
+    dec16 wMapObject0
+    ret
+.down
+    inc16 wMapObject0
+    ret
+.left
+    dec16 wMapObject0+2
+    ret
+.right
+    inc16 wMapObject0+2
+    ret
+    
+.return
+    call ClearOAM
+    pop hl ; don't want to ret
+    jp InitGame
+
+MoveCameraUp:
     dec16 wCameraY
     ld a, [wCameraY+1]
     cp $ff
@@ -329,13 +348,13 @@ StartGame:
     and %00000111
     call z, ScrollUp
     ret
-.down
+MoveCameraDown:
     inc16 wCameraY
     ld a, [wCameraY]
     and %00000111
     call z, ScrollDown
     ret
-.left
+MoveCameraLeft:
     dec16 wCameraX
     ld a, [wCameraX+1]
     cp $ff
@@ -348,17 +367,13 @@ StartGame:
     and %00000111
     call z, ScrollLeft
     ret
-.right
+MoveCameraRight:
     inc16 wCameraX
     ld a, [wCameraX]
     and %00000111
     call z, ScrollRight
     ret
     
-.return
-    call ClearOAM
-    pop hl ; don't want to ret
-    jp InitGame
 
 ScrollDown:
     ld bc, 144
@@ -503,11 +518,7 @@ ScrollHor:
     lda [wCopyColAmount], $13
     ret
 
-UpdateSprites:
-    fillmemory W_OAM, 0, 4*$28
-    
-    
-    ld de, wMapObject0
+SubCameraYAtDE:
     ld a, [wCameraY]
     xor $ff
     ld c, a
@@ -521,14 +532,9 @@ UpdateSprites:
     add hl, bc
     ld bc, 16
     add hl, bc
-    ld a, h
-    and a
-    jr nz, .skip2
-    ld a, l
-    cp 160
-    jr nc, .skip2
-    ld [wTmpSpriteY], a
-    
+    ret
+
+SubCameraXAtDE:
     ld a, [wCameraX]
     xor $ff
     ld c, a
@@ -542,6 +548,23 @@ UpdateSprites:
     add hl, bc
     ld bc, 16
     add hl, bc
+    ret
+
+UpdateSprites:
+    fillmemory W_OAM, 0, 4*$28
+    
+    
+    ld de, wMapObject0
+    call SubCameraYAtDE
+    ld a, h
+    and a
+    jr nz, .skip2
+    ld a, l
+    cp 160
+    jr nc, .skip2
+    ld [wTmpSpriteY], a
+    
+    call SubCameraXAtDE
     ld a, h
     and a
     jr nz, .skip
@@ -574,6 +597,38 @@ UpdateSprites:
 .skip
 .end
     ret
+
+CameraTowardsSprite:
+    ld de, wMapObject0
+    call SubCameraYAtDE
+    push de
+    ld bc, -160/2 - 8
+    add hl, bc
+    bit 7, h
+    jr z, .notup
+    call MoveCameraUp
+    jr .next
+.notup
+    ld a, h
+    or l
+    call nz, MoveCameraDown
+.next
+    pop de
+    
+    call SubCameraXAtDE
+    ld bc, -144/2 - 16
+    add hl, bc
+    bit 7, h
+    jr z, .notleft
+    call MoveCameraLeft
+    jr .end
+.notleft
+    ld a, h
+    or l
+    call nz, MoveCameraRight
+.end
+    ret
+
 
 Options:
     printstatic $50, $10, $8, 0, "Just testing menu...@"
