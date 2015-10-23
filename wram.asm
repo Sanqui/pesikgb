@@ -24,6 +24,9 @@ wCopyColData: ds 32
 wTmpSpriteY: ds 1
 wTmpSpriteX: ds 1
 
+wTmpSpriteHeight: ds 1
+wTmpSpriteWidth: ds 1
+
 SECTION "Map Objects",WRAM0[$c400]
 wMapObject0: ds 8
 

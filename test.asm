@@ -241,21 +241,17 @@ Start:
     jp InitGame
 
 NewGameMenu:
-    db 1, 4, 4, 8 ; y, x, h, w
+    db 3, 4, 2, 9 ; y, x, h, w
     db $30 ; tile gfx index
     db 0 ; options are inlined
-    db 3 ; number of options
-    db "something@"
+    db 1 ; number of options
     db "Start@"
-    db "dunno@"
     db 1 ; callbacks
-    dw Tutorial
     dw StartGame
-    dw Options
 
 InitGame:
     call ClearTilemap
-    printstatic $00, $0f, 0, 6, "It's a game!@"
+    printstatic $00, $0f, 1, 5, "RPG engine test@"
     printstatic $10, $20, $11, 0, "Sanky 2015@"
     xor a
     ld [H_SCX], a
@@ -305,6 +301,9 @@ StartGame:
     
 .loop
     frame
+    xor a
+    ld [wTmpSpriteWidth], a
+    ld [wTmpSpriteHeight], a
     calljoy UP, .up
     calljoy DOWN, .down
     calljoy LEFT, .left
@@ -320,25 +319,43 @@ StartGame:
 .up
     dec16 wMapObject0
     call IsSpriteAtWall
+    jr nz, .up_inc
+    lda [wTmpSpriteWidth], 15
+    call IsSpriteAtWall
     ret z
+.up_inc
     inc16 wMapObject0
     ret
 .down
     inc16 wMapObject0
+    lda [wTmpSpriteHeight], 15
+    call IsSpriteAtWall
+    jr nz, .down_inc
+    lda [wTmpSpriteWidth], 15
     call IsSpriteAtWall
     ret z
+.down_inc
     dec16 wMapObject0
     ret
 .left
     dec16 wMapObject0+2
     call IsSpriteAtWall
+    jr nz, .left_inc
+    lda [wTmpSpriteHeight], 15
+    call IsSpriteAtWall
     ret z
+.left_inc
     inc16 wMapObject0+2
     ret
 .right
     inc16 wMapObject0+2
+    lda [wTmpSpriteWidth], 15
+    call IsSpriteAtWall
+    jr nz, .right_inc
+    lda [wTmpSpriteHeight], 15
     call IsSpriteAtWall
     ret z
+.right_inc
     dec16 wMapObject0+2
     ret
     
@@ -645,6 +662,12 @@ CameraTowardsSprite:
 IsSpriteAtWall:
     lda l, [wMapObject0]
     lda h, [wMapObject0+1]
+    ld a, [wTmpSpriteHeight]
+    add l
+    ld l, a
+    jr nc, .nc
+    inc h
+.nc
     ld a, l
     and %11111000
     ld l, a
@@ -659,6 +682,12 @@ IsSpriteAtWall:
     
     lda c, [wMapObject0+2]
     lda b, [wMapObject0+3]
+    ld a, [wTmpSpriteWidth]
+    add c
+    ld c, a
+    jr nc, .nc_
+    inc b
+.nc_
     
     sra b
     rr c
@@ -676,11 +705,6 @@ IsSpriteAtWall:
     add hl, bc
     ld a, [hl]
     and a
-    ret
-
-Options:
-    printstatic $50, $10, $8, 0, "Just testing menu...@"
-    refreshscreen
     ret
 
 Tileset:
