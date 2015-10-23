@@ -519,6 +519,8 @@ UpdateSprites:
     lda h, [de]
     inc de
     add hl, bc
+    ld bc, 16
+    add hl, bc
     ld a, h
     and a
     jr nz, .skip2
@@ -538,12 +540,15 @@ UpdateSprites:
     lda h, [de]
     inc de
     add hl, bc
+    ld bc, 16
+    add hl, bc
     ld a, h
     and a
     jr nz, .skip
     ld a, l
-    cp 144
+    cp 144+32
     jr nc, .skip
+    sub 8
     ld [wTmpSpriteX], a
     
     ld hl, W_OAM
