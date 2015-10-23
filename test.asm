@@ -319,15 +319,27 @@ StartGame:
     
 .up
     dec16 wMapObject0
+    call IsSpriteAtWall
+    ret z
+    inc16 wMapObject0
     ret
 .down
     inc16 wMapObject0
+    call IsSpriteAtWall
+    ret z
+    dec16 wMapObject0
     ret
 .left
     dec16 wMapObject0+2
+    call IsSpriteAtWall
+    ret z
+    inc16 wMapObject0+2
     ret
 .right
     inc16 wMapObject0+2
+    call IsSpriteAtWall
+    ret z
+    dec16 wMapObject0+2
     ret
     
 .return
@@ -630,6 +642,42 @@ CameraTowardsSprite:
     ret
 
 
+IsSpriteAtWall:
+    lda l, [wMapObject0]
+    lda h, [wMapObject0+1]
+    ld a, l
+    and %11111000
+    ld l, a
+    
+    ; *8
+    sla l
+    rl h
+    sla l
+    rl h
+    sla l
+    rl h
+    
+    lda c, [wMapObject0+2]
+    lda b, [wMapObject0+3]
+    
+    sra b
+    rr c
+    sra b
+    rr c
+    sra b
+    rr c
+    add hl, bc
+    
+    ld bc, Tilemap
+    add hl, bc
+    ld c, [hl] ; tile
+    ld b, 0
+    ld hl, TileCollisions
+    add hl, bc
+    ld a, [hl]
+    and a
+    ret
+
 Options:
     printstatic $50, $10, $8, 0, "Just testing menu...@"
     refreshscreen
@@ -646,3 +694,7 @@ TilemapEnd
 Melodingo:
     INCBIN "gfx/melodingo_small.interleave.2bpp"
 MelodingoEnd
+
+TileCollisions:
+    db 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0
+    db 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0
