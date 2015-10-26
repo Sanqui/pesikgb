@@ -287,7 +287,9 @@ StartGame:
     ;copy $9800, Tilemap
     
     ld hl, wMapObject0
+    lda [hli], 0
     lda [hli], 120+100+8
+    lda [hli], 0
     lda [hli], 0
     lda [hli], 80+100+16
     lda [hli], 0
@@ -299,18 +301,171 @@ StartGame:
     xor a
     ld [wTmpSpriteWidth], a
     ld [wTmpSpriteHeight], a
-    calljoy UP, .up
-    calljoy DOWN, .down
-    calljoy LEFT, .left
-    calljoy RIGHT, .right
-    ;call ScrollVert
+    ld a, [H_JOY]
+    swap a
+    and %00001111
+    ld [wMapObject0+6], a
+    call MoveObject
     call CameraTowardsSprite
     call UpdateSprites
     lda [H_SCY], [wCameraY]
     lda [H_SCX], [wCameraX]
-    jpjoynew START, .return
+    ;jpjoynew START, .return
     jr .loop
+
+MoveObject:
+    ld a, [wMapObject0+6]
+    and a
+    jr nz, .move
+    xor a
+    ld [wMapObject0+7], a
+.move
+    ld hl, Directions
+    ld c, a
+    ld b, 0
+    add hl, bc
+    add hl, bc
+    lda [wMoveVert], [hli]
+    ld b, a
+    lda [wMoveHor], [hl]
+    and b
+    ld hl, MovementSteps
+    jr z, .notdiag
+    ld hl, MovementStepsDiag
+.notdiag
+    ld a, [wMapObject0+7]
+    ld c, a
+    ld b, 0
+    add hl, bc
+    add hl, bc
+    lda c, [hli]
+    ld b, [hl]
     
+    ld de, wMapObject0
+    
+    push bc
+    ld a, [wMoveVert]
+    call .doDirection
+    pop bc
+    
+    ld a, [wMoveHor]
+    call .doDirection
+    
+    ld hl, wMapObject0+7
+    ld a, [hl]
+    inc a
+    ld [hl], a
+    cp 32
+    ret c
+    dec [hl]
+    ret
+    
+.doDirection
+    and a
+    jr nz, .dodirection
+.skip
+    inc de
+    inc de
+    inc de
+    ret
+.dodirection
+    push af
+    ld a, c
+    or b
+    jr nz, .do
+    pop af
+    jr .skip
+.do
+    pop af
+    
+    dec a
+    jr z, .positive
+.negative
+    ld a, c
+    cpl
+    inc a
+    ld c, a
+    jr nz, .nzneg
+    dec b
+.nzneg
+    ld a, b
+    cpl
+    
+    ld b, a
+    lda l, [de]
+    inc de
+    lda h, [de]
+    inc de
+    add hl, bc
+    jr c, .write
+    ld a, [de]
+    dec a
+    ld [de], a
+    
+    jr .write
+    
+.positive
+    ld b, a
+    lda l, [de]
+    inc de
+    lda h, [de]
+    inc de
+    add hl, bc
+    jr nc, .write
+    ld a, [de]
+    inc a
+    ld [de], a
+.write
+    dec de
+    dec de
+    
+    lda [de], l
+    inc de
+    lda [de], h
+    inc de
+    inc de
+    ret
+
+Directions:
+    ;   y   x
+    db  0,  0 ; 0000   none
+    db  0,  1 ; 0001   right 
+    db  0, -1 ; 0010   left
+    db  0,  0 ; 0011   right/left
+    db -1,  0 ; 0100   up
+    db -1,  1 ; 0101   up/right
+    db -1, -1 ; 0110   up/left
+    db  0,  0 ; 0111 X up/left/right
+    db  1,  0 ; 1000   down
+    db  1,  1 ; 1001   down/right 
+    db  1, -1 ; 1010   down/left
+    db  0,  0 ; 1011 X down/left/right
+    db  0,  0 ; 1100 X down/up
+    db  0,  0 ; 1101 X down/up/right
+    db  0,  0 ; 1110 X down/up/left
+    db  0,  0 ; 1111 X down/up/left/right
+
+MovementSteps:
+    dw 0
+x = 0.0
+rept 32
+    ; DIV(x, 12.0)
+    ;dw SIN(0.0) >> 16
+    ;printf SIN(MUL( x<<6, DIV(256.0, 16.0) ))
+    ;PRINTT "\n"
+    dw     SIN(MUL( x<<6, DIV(256.0, 32.0) )) >> 8
+x = x + 1.0
+endr
+
+MovementStepsDiag:
+    dw 0
+x = 0.0
+rept 32
+    dw     DIV(SIN(MUL( x<<6, DIV(256.0, 32.0) )), 1.41421356237) >> 8
+x = x + 1.0
+endr
+
+Old:
 .up
     call AdvanceSpriteMovement
     call TryMovingUp
@@ -392,7 +547,7 @@ StartGame:
     jp InitGame
 
 AdvanceSpriteMovement:
-    ld hl, wMapObject0+5
+    ld hl, wMapObject0+9
     inc [hl]
     ret
 
@@ -506,10 +661,10 @@ ScrollVert:
     lda [wCopyRowDest+1], d
     ld de, wCopyRowData
     
-    ld bc, $16
+    ld bc, $17
     call CopyData
     
-    lda [wCopyRowAmount], $16
+    lda [wCopyRowAmount], $17
     ret
 
 
@@ -628,7 +783,7 @@ UpdateSprites:
     ;fillmemory W_OAM, 0, 4*$28
     
     
-    ld de, wMapObject0
+    ld de, wMapObject0+1
     call SubCameraYAtDE
     ld a, h
     and a
@@ -638,6 +793,7 @@ UpdateSprites:
     jr nc, .skip2
     ld [wTmpSpriteY], a
     
+    inc de
     call SubCameraXAtDE
     ld a, h
     and a
@@ -647,6 +803,8 @@ UpdateSprites:
     jr nc, .skip
     sub 8
     ld [wTmpSpriteX], a
+    inc de
+    inc de
     ld a, [de]
     inc de
     add a
@@ -694,7 +852,7 @@ UpdateSprites:
     ret
 
 CameraTowardsSprite:
-    ld de, wMapObject0
+    ld de, wMapObject0+1
     call SubCameraYAtDE
     push de
     ld bc, -160/2 - 8
@@ -709,6 +867,7 @@ CameraTowardsSprite:
     call nz, MoveCameraDown
 .next
     pop de
+    inc de ; suby
     
     call SubCameraXAtDE
     ld bc, -144/2 - 16
@@ -872,17 +1031,17 @@ PreparePlayerCollisionMap:
     ret
 
 IsSpriteAtWall:
-    ld a, [wMapObject0]
+    ld a, [wMapObject0+1]
     add a, 8
     ld [wCurY], a
-    ld a, [wMapObject0+1]
+    ld a, [wMapObject0+2]
     adc a, 0
     ld [wCurY+1], a
     
-    ld a, [wMapObject0+2]
+    ld a, [wMapObject0+4]
     add a, 4
     ld [wCurX], a
-    ld a, [wMapObject0+3]
+    ld a, [wMapObject0+5]
     adc a, 0
     ld [wCurX+1], a
     call FillCollisionMap
@@ -1041,3 +1200,5 @@ TileCollisionMasks:
     db %11100000
     db %11000000
     db %10000000
+
+

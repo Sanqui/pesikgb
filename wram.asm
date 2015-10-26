@@ -30,13 +30,22 @@ wTmpSpriteWidth: ds 1
 wCurY: ds 2
 wCurX: ds 2
 
-ds 5
-
 wCollisionTestMap: ds 8*4
 wCollisionTestMap2: ds 8*4
 
+wMoveHor: db
+wMoveVert: db
+
 SECTION "Map Objects",WRAM0[$c400]
-wMapObject0: ds 8
+wMapObject0:
+.ysub: db
+.y: dw
+.xsub: db
+.x: dw
+.dir: db
+.step: db
+.spritedir: db
+.count: db
 
 SECTION "vwf",WRAM0[$c500]
 wVWFLetterNum:

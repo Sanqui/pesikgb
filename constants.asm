@@ -230,6 +230,12 @@ calljoy: MACRO
     call nz, \2
     ENDM
 
+calljoynew: MACRO
+    ld a, [H_JOYNEY]
+    bit \1, a
+    call nz, \2
+    ENDM
+
 dec16: MACRO
     ld a, [\1]
     sub a, 1
@@ -255,6 +261,14 @@ inc16: MACRO
 djnz: MACRO
     dec b
     jr nz, \1
+ENDM
+
+signextend: MACRO
+    ld \1, 0
+    bit 7, \2
+    jr z, .done\@
+    ld \1, -1
+.done\@
 ENDM
 
 
