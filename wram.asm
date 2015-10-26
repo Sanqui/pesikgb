@@ -19,13 +19,18 @@ wCopyRowData: ds 32
 
 wCopyColAmount: ds 1
 wCopyColDest: ds 2
-wCopyColData: ds 32
+wCopyColData: ds 8*6
 
 wTmpSpriteY: ds 1
 wTmpSpriteX: ds 1
 
 wTmpSpriteHeight: ds 1
 wTmpSpriteWidth: ds 1
+
+wCurY: ds 2
+wCurX: ds 2
+
+wCollisionTestMap: ds 8*6
 
 SECTION "Map Objects",WRAM0[$c400]
 wMapObject0: ds 8

@@ -262,11 +262,6 @@ InitGame:
     domenu NewGameMenu
     jr .here
 
-Tutorial:
-    printstatic $50, $10, $8, 0, "N/A...@"
-    refreshscreen
-    ret
-
 StartGame:
     frame2
     call ClearTilemap
@@ -319,43 +314,25 @@ StartGame:
 .up
     dec16 wMapObject0
     call IsSpriteAtWall
-    jr nz, .up_inc
-    lda [wTmpSpriteWidth], 15
-    call IsSpriteAtWall
     ret z
-.up_inc
     inc16 wMapObject0
     ret
 .down
     inc16 wMapObject0
-    lda [wTmpSpriteHeight], 15
-    call IsSpriteAtWall
-    jr nz, .down_inc
-    lda [wTmpSpriteWidth], 15
     call IsSpriteAtWall
     ret z
-.down_inc
     dec16 wMapObject0
     ret
 .left
     dec16 wMapObject0+2
     call IsSpriteAtWall
-    jr nz, .left_inc
-    lda [wTmpSpriteHeight], 15
-    call IsSpriteAtWall
     ret z
-.left_inc
     inc16 wMapObject0+2
     ret
 .right
     inc16 wMapObject0+2
-    lda [wTmpSpriteWidth], 15
-    call IsSpriteAtWall
-    jr nz, .right_inc
-    lda [wTmpSpriteHeight], 15
     call IsSpriteAtWall
     ret z
-.right_inc
     dec16 wMapObject0+2
     ret
     
@@ -658,53 +635,100 @@ CameraTowardsSprite:
 .end
     ret
 
+GetTileAt:
+    ld a, [wCurY]
+    and %11111000
+    ld l, a
+    lda h, [wCurY+1]
+    sla l
+    rl h
+    sla l
+    rl h
+    sla l
+    rl h
+    
+    lda c, [wCurX]
+    lda b, [wCurX+1]
+    sra b
+    rr c
+    sra b
+    rr c
+    sra b
+    rr c
+    add hl, bc
+    ld bc, Tilemap
+    add hl, bc
+    ld a, [hl] ; tile
+    ret
 
-IsSpriteAtWall:
-    lda l, [wMapObject0]
-    lda h, [wMapObject0+1]
-    ld a, [wTmpSpriteHeight]
+CopyCollisionMapOfTile:
+    ld hl, TileCollisions
     add l
     ld l, a
     jr nc, .nc
     inc h
 .nc
-    ld a, l
-    and %11111000
-    ld l, a
-    
-    ; *8
+    ld l, [hl]
+    ld h, 0
     sla l
-    rl h
+    rr h
     sla l
-    rl h
+    rr h
     sla l
-    rl h
-    
-    lda c, [wMapObject0+2]
-    lda b, [wMapObject0+3]
-    ld a, [wTmpSpriteWidth]
-    add c
-    ld c, a
-    jr nc, .nc_
-    inc b
-.nc_
-    
-    sra b
-    rr c
-    sra b
-    rr c
-    sra b
-    rr c
+    rr h
+    ld bc, TileCollisionMasks
     add hl, bc
-    
-    ld bc, Tilemap
+rept 8
+    ld a, [hli]
+    ld [de], a
+    inc de
+endr
+    ret
+
+FillCollisionMap:
+    call GetTileAt
+    ld de, wCollisionTestMap
+    call CopyThreeCollisionTiles
+    ld bc, 64 - 2
     add hl, bc
-    ld c, [hl] ; tile
-    ld b, 0
-    ld hl, TileCollisions
-    add hl, bc
+    ld a, [hli]
+CopyThreeCollisionTiles:
+    push hl
+    call CopyCollisionMapOfTile
+    pop hl
+    ld a, [hli]
+    push hl
+    call CopyCollisionMapOfTile
+    pop hl
     ld a, [hl]
-    and a
+    push hl
+    call CopyCollisionMapOfTile
+    pop hl
+    ret
+
+IsSpriteAtWall:
+    lda [wCurY], [wMapObject0]
+    lda [wCurY+1], [wMapObject0+1]
+    lda [wCurX], [wMapObject0+2]
+    lda [wCurX+1], [wMapObject0+3]
+    call FillCollisionMap
+    ; overlay player collision mask
+    ;ld hl, PlayerCollisionMask
+    ld hl, wCollisionTestMap
+    ld a, [wMapObject0]
+    and %00000111
+    ld c, a
+    ld b, 0
+    add hl, bc
+    
+    ld a, [wMapObject0+2]
+    and %00000111
+.loop
+    rlc [hl]
+    dec a
+    jr nz, .loop
+    bit 0, [hl]
+    
     ret
 
 Tileset:
@@ -719,6 +743,90 @@ Melodingo:
     INCBIN "gfx/melodingo_small.interleave.2bpp"
 MelodingoEnd
 
+PlayerCollisionMask:
+    db %00000000
+    db %00000000
+    db %00000000
+    db %00000000
+    db %01111110
+    db %11111111
+    db %11111111
+    db %01111110
+
 TileCollisions:
-    db 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0
-    db 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0
+    db 0, 0, 0, 2, 4, 5, 4, 5, 1, 0, 0, 0, 0, 0, 0, 0
+    db 0, 0, 0, 0, 6, 7, 6, 7, 0, 0, 0, 0, 0, 0, 0, 0
+
+TileCollisionMasks:
+; 0 empty
+    db %00000000
+    db %00000000
+    db %00000000
+    db %00000000
+    db %00000000
+    db %00000000
+    db %00000000
+    db %00000000
+; 1 full
+    db %11111111
+    db %11111111
+    db %11111111
+    db %11111111
+    db %11111111
+    db %11111111
+    db %11111111
+    db %11111111
+; 2 round
+    db %00011000
+    db %00111100
+    db %01111110
+    db %11111111
+    db %11111111
+    db %01111110
+    db %00111100
+    db %00011000
+; 3 none yet
+    db %00000000
+    db %00000000
+    db %00000000
+    db %00000000
+    db %00000000
+    db %00000000
+    db %00000000
+    db %00000000
+; 4 bottom right
+    db %00011111
+    db %00111111
+    db %01111111
+    db %11111111
+    db %11111111
+    db %11111111
+    db %11111111
+    db %11111111
+; 4 bottom left
+    db %11111000
+    db %11111100
+    db %11111110
+    db %11111111
+    db %11111111
+    db %11111111
+    db %11111111
+    db %11111111
+; 4 top right
+    db %11111111
+    db %11111111
+    db %11111111
+    db %11111111
+    db %11111111
+    db %01111111
+    db %00111111
+    db %00011111
+; 4 top left
+    db %11111111
+    db %11111111
+    db %11111111
+    db %11111111
+    db %11111111
+    db %11111110
+    db %11111100
+    db %11111000
