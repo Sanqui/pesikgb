@@ -312,6 +312,7 @@ StartGame:
     jr .loop
     
 .up
+    call AdvanceSpriteMovement
     call TryMovingUp
     ret z
     call TryMovingLeft
@@ -329,6 +330,7 @@ StartGame:
     dec16 wMapObject0+2
     ret
 .down
+    call AdvanceSpriteMovement
     call TryMovingDown
     ret z
     call TryMovingLeft
@@ -346,6 +348,8 @@ StartGame:
     dec16 wMapObject0+2
     ret
 .left
+    call AdvanceSpriteMovement
+    lda [wMapObject0+4], 1
     call TryMovingLeft
     ret z
     call TryMovingUp
@@ -363,6 +367,8 @@ StartGame:
     dec16 wMapObject0
     ret
 .right
+    call AdvanceSpriteMovement
+    lda [wMapObject0+4], 0
     call TryMovingRight
     ret z
     call TryMovingUp
@@ -384,6 +390,11 @@ StartGame:
     call ClearOAM
     pop hl ; don't want to ret
     jp InitGame
+
+AdvanceSpriteMovement:
+    ld hl, wMapObject0+5
+    inc [hl]
+    ret
 
 TryMovingUp:
     dec16 wMapObject0
@@ -636,12 +647,27 @@ UpdateSprites:
     jr nc, .skip
     sub 8
     ld [wTmpSpriteX], a
+    ld a, [de]
+    inc de
+    add a
+    ld b, a
+    ld a, [de]
+    and %00001000
+    sra a
+    ld c, a
     
     ld hl, W_OAM
     lda [hli], [wTmpSpriteY]
     lda [hli], [wTmpSpriteX]
     xor a
+    add c
+    add b
     ld [hli], a
+    ld a, b
+    sla a
+    sla a
+    sla a
+    sla a
     ld [hli], a
     
     lda [hli], [wTmpSpriteY]
@@ -649,8 +675,14 @@ UpdateSprites:
     add 8
     ld [hli], a
     ld a, 2
+    add c
+    sub b
     ld [hli], a
-    xor a
+    ld a, b
+    sla a
+    sla a
+    sla a
+    sla a
     ld [hli], a
     jr .end
     
