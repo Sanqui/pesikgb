@@ -346,10 +346,38 @@ MoveObject:
     push bc
     ld a, [wMoveVert]
     call .doDirection
+    jr z, .hor
+    lda [wTestObjectY], [wNewPosition+1]
+    lda [wTestObjectY+1], [wNewPosition+2]
+    lda [wTestObjectX], [wMapObject0+4]
+    lda [wTestObjectX+1], [wMapObject0+5]
+    push de
+    push hl
+    call IsSpriteAtWall
+    pop hl
+    pop de
+    jr nz, .hor
+    lda [wMapObject0], [wNewPosition]
+    lda [wMapObject0+1], [wNewPosition+1]
+    lda [wMapObject0+2], [wNewPosition+2]
+.hor
     pop bc
     
     ld a, [wMoveHor]
     call .doDirection
+    jr z, .nohor
+    
+    lda [wTestObjectY], [wMapObject0+1]
+    lda [wTestObjectY+1], [wMapObject0+2]
+    lda [wTestObjectX], [wNewPosition+1]
+    lda [wTestObjectX+1], [wNewPosition+2]
+    call IsSpriteAtWall
+    jr nz, .nohor
+    lda [wMapObject0+3], [wNewPosition]
+    lda [wMapObject0+4], [wNewPosition+1]
+    lda [wMapObject0+5], [wNewPosition+2]
+    
+.nohor
     
     ld hl, wMapObject0+7
     ld a, [hl]
@@ -367,6 +395,7 @@ MoveObject:
     inc de
     inc de
     inc de
+    xor a
     ret
 .dodirection
     push af
@@ -397,10 +426,10 @@ MoveObject:
     lda h, [de]
     inc de
     add hl, bc
-    jr c, .write
     ld a, [de]
+    jr c, .write
     dec a
-    ld [de], a
+    ;ld [de], a
     
     jr .write
     
@@ -411,19 +440,26 @@ MoveObject:
     lda h, [de]
     inc de
     add hl, bc
-    jr nc, .write
     ld a, [de]
+    jr nc, .write
     inc a
-    ld [de], a
+    ;ld [de], a
 .write
-    dec de
-    dec de
+    inc de
+    push de
+    ld de, wNewPosition
     
+    push af
     lda [de], l
     inc de
     lda [de], h
     inc de
-    inc de
+    pop af
+    ld [de], a
+    
+    ld a, 1
+    and a
+    pop de
     ret
 
 Directions:
@@ -465,104 +501,10 @@ rept 32
 x = x + 1.0
 endr
 
-Old:
-.up
-    call AdvanceSpriteMovement
-    call TryMovingUp
-    ret z
-    call TryMovingLeft
-    push af
-    inc16 wMapObject0
-    pop af
-    ret z
-    inc16 wMapObject0+2
-    dec16 wMapObject0
-    call TryMovingRight
-    push af
-    inc16 wMapObject0
-    pop af
-    ret z
-    dec16 wMapObject0+2
-    ret
-.down
-    call AdvanceSpriteMovement
-    call TryMovingDown
-    ret z
-    call TryMovingLeft
-    push af
-    dec16 wMapObject0
-    pop af
-    ret z
-    inc16 wMapObject0+2
-    inc16 wMapObject0
-    call TryMovingRight
-    push af
-    dec16 wMapObject0
-    pop af
-    ret z
-    dec16 wMapObject0+2
-    ret
-.left
-    call AdvanceSpriteMovement
-    lda [wMapObject0+4], 1
-    call TryMovingLeft
-    ret z
-    call TryMovingUp
-    push af
-    inc16 wMapObject0+2
-    pop af
-    ret z
-    inc16 wMapObject0
-    dec16 wMapObject0+2
-    call TryMovingDown
-    push af
-    inc16 wMapObject0+2
-    pop af
-    ret z
-    dec16 wMapObject0
-    ret
-.right
-    call AdvanceSpriteMovement
-    lda [wMapObject0+4], 0
-    call TryMovingRight
-    ret z
-    call TryMovingUp
-    push af
-    dec16 wMapObject0+2
-    pop af
-    ret z
-    inc16 wMapObject0
-    inc16 wMapObject0+2
-    call TryMovingDown
-    push af
-    dec16 wMapObject0+2
-    pop af
-    ret z
-    dec16 wMapObject0
-    ret
-    
-.return
-    call ClearOAM
-    pop hl ; don't want to ret
-    jp InitGame
-
 AdvanceSpriteMovement:
     ld hl, wMapObject0+9
     inc [hl]
     ret
-
-TryMovingUp:
-    dec16 wMapObject0
-    jp IsSpriteAtWall
-TryMovingDown:
-    inc16 wMapObject0
-    jp IsSpriteAtWall
-TryMovingLeft:
-    dec16 wMapObject0+2
-    jp IsSpriteAtWall
-TryMovingRight:
-    inc16 wMapObject0+2
-    jp IsSpriteAtWall
 
 MoveCameraUp:
     dec16 wCameraY
@@ -1031,17 +973,17 @@ PreparePlayerCollisionMap:
     ret
 
 IsSpriteAtWall:
-    ld a, [wMapObject0+1]
+    ld a, [wTestObjectY]
     add a, 8
     ld [wCurY], a
-    ld a, [wMapObject0+2]
+    ld a, [wTestObjectY+1]
     adc a, 0
     ld [wCurY+1], a
     
-    ld a, [wMapObject0+4]
+    ld a, [wTestObjectX]
     add a, 4
     ld [wCurX], a
-    ld a, [wMapObject0+5]
+    ld a, [wTestObjectX+1]
     adc a, 0
     ld [wCurX+1], a
     call FillCollisionMap

@@ -36,6 +36,11 @@ wCollisionTestMap2: ds 8*4
 wMoveHor: db
 wMoveVert: db
 
+wNewPosition: ds 3
+
+wTestObjectY: dw
+wTestObjectX: dw
+
 SECTION "Map Objects",WRAM0[$c400]
 wMapObject0:
 .ysub: db
