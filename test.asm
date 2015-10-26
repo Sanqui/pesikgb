@@ -312,34 +312,91 @@ StartGame:
     jr .loop
     
 .up
-    dec16 wMapObject0
-    call IsSpriteAtWall
+    call TryMovingUp
     ret z
+    call TryMovingLeft
+    push af
     inc16 wMapObject0
+    pop af
+    ret z
+    inc16 wMapObject0+2
+    dec16 wMapObject0
+    call TryMovingRight
+    push af
+    inc16 wMapObject0
+    pop af
+    ret z
+    dec16 wMapObject0+2
     ret
 .down
+    call TryMovingDown
+    ret z
+    call TryMovingLeft
+    push af
+    dec16 wMapObject0
+    pop af
+    ret z
+    inc16 wMapObject0+2
     inc16 wMapObject0
-    call IsSpriteAtWall
+    call TryMovingRight
+    push af
+    dec16 wMapObject0
+    pop af
+    ret z
+    dec16 wMapObject0+2
+    ret
+.left
+    call TryMovingLeft
+    ret z
+    call TryMovingUp
+    push af
+    inc16 wMapObject0+2
+    pop af
+    ret z
+    inc16 wMapObject0
+    dec16 wMapObject0+2
+    call TryMovingDown
+    push af
+    inc16 wMapObject0+2
+    pop af
     ret z
     dec16 wMapObject0
     ret
-.left
-    dec16 wMapObject0+2
-    call IsSpriteAtWall
-    ret z
-    inc16 wMapObject0+2
-    ret
 .right
-    inc16 wMapObject0+2
-    call IsSpriteAtWall
+    call TryMovingRight
     ret z
+    call TryMovingUp
+    push af
     dec16 wMapObject0+2
+    pop af
+    ret z
+    inc16 wMapObject0
+    inc16 wMapObject0+2
+    call TryMovingDown
+    push af
+    dec16 wMapObject0+2
+    pop af
+    ret z
+    dec16 wMapObject0
     ret
     
 .return
     call ClearOAM
     pop hl ; don't want to ret
     jp InitGame
+
+TryMovingUp:
+    dec16 wMapObject0
+    jp IsSpriteAtWall
+TryMovingDown:
+    inc16 wMapObject0
+    jp IsSpriteAtWall
+TryMovingLeft:
+    dec16 wMapObject0+2
+    jp IsSpriteAtWall
+TryMovingRight:
+    inc16 wMapObject0+2
+    jp IsSpriteAtWall
 
 MoveCameraUp:
     dec16 wCameraY
@@ -840,8 +897,8 @@ PlayerCollisionMask:
     db 0, 0, 0, 0, 0, 0, 0, 0 ; padding
 
 TileCollisions:
-    db 0, 0, 0, 2, 4, 5, 4, 5, 1, 0, 0, 0, 0, 0, 0, 0
-    db 0, 0, 0, 0, 6, 7, 6, 7, 0, 0, 0, 0, 0, 0, 0, 0
+    db 0, 0, 0, 2, 4, 5, 8, 9, 1, 0, 0, 0, 0, 0, 0, 0
+    db 0, 0, 0, 0, 6, 7,10,11, 0, 0, 0, 0, 0, 0, 0, 0
 
 TileCollisionMasks:
 ; 0 empty
@@ -889,7 +946,7 @@ TileCollisionMasks:
     db %11111111
     db %11111111
     db %11111111
-; 4 bottom left
+; 5 bottom left
     db %11111000
     db %11111100
     db %11111110
@@ -898,7 +955,7 @@ TileCollisionMasks:
     db %11111111
     db %11111111
     db %11111111
-; 4 top right
+; 6 top right
     db %11111111
     db %11111111
     db %11111111
@@ -907,7 +964,7 @@ TileCollisionMasks:
     db %01111111
     db %00111111
     db %00011111
-; 4 top left
+; 7 top left
     db %11111111
     db %11111111
     db %11111111
@@ -916,3 +973,39 @@ TileCollisionMasks:
     db %11111110
     db %11111100
     db %11111000
+; 8 bottom right diag
+    db %00000001
+    db %00000011
+    db %00000111
+    db %00001111
+    db %00011111
+    db %00111111
+    db %01111111
+    db %11111111
+; 9 top right diag
+    db %10000000
+    db %11000000
+    db %11100000
+    db %11110000
+    db %11111000
+    db %11111100
+    db %11111110
+    db %11111111
+; 10 bottom left diag
+    db %11111111
+    db %01111111
+    db %00111111
+    db %00011111
+    db %00001111
+    db %00000111
+    db %00000011
+    db %00000001
+; 11 bottom right diag
+    db %11111111
+    db %11111110
+    db %11111100
+    db %11111000
+    db %11110000
+    db %11100000
+    db %11000000
+    db %10000000
