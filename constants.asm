@@ -252,6 +252,11 @@ inc16: MACRO
 .done\@
     ENDM
 
+djnz: MACRO
+    dec b
+    jr nz, \1
+ENDM
+
 
 H_TIMER EQU $FFF0
 H_RNG1 EQU $FFF1

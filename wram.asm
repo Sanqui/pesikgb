@@ -30,7 +30,10 @@ wTmpSpriteWidth: ds 1
 wCurY: ds 2
 wCurX: ds 2
 
-wCollisionTestMap: ds 8*6
+ds 5
+
+wCollisionTestMap: ds 8*4
+wCollisionTestMap2: ds 8*4
 
 SECTION "Map Objects",WRAM0[$c400]
 wMapObject0: ds 8

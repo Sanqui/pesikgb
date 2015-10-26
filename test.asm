@@ -287,9 +287,9 @@ StartGame:
     ;copy $9800, Tilemap
     
     ld hl, wMapObject0
-    lda [hli], 120+100
+    lda [hli], 120+100+8
     lda [hli], 0
-    lda [hli], 80+100
+    lda [hli], 80+100+16
     lda [hli], 0
     
     call EnableLCD
@@ -557,7 +557,7 @@ SubCameraXAtDE:
     ret
 
 UpdateSprites:
-    fillmemory W_OAM, 0, 4*$28
+    ;fillmemory W_OAM, 0, 4*$28
     
     
     ld de, wMapObject0
@@ -688,15 +688,12 @@ endr
 FillCollisionMap:
     call GetTileAt
     ld de, wCollisionTestMap
-    call CopyThreeCollisionTiles
-    ld bc, 64 - 2
+    inc hl
+    call CopyTwoCollisionTiles
+    ld bc, 64 - 1
     add hl, bc
     ld a, [hli]
-CopyThreeCollisionTiles:
-    push hl
-    call CopyCollisionMapOfTile
-    pop hl
-    ld a, [hli]
+CopyTwoCollisionTiles:
     push hl
     call CopyCollisionMapOfTile
     pop hl
@@ -706,28 +703,113 @@ CopyThreeCollisionTiles:
     pop hl
     ret
 
-IsSpriteAtWall:
-    lda [wCurY], [wMapObject0]
-    lda [wCurY+1], [wMapObject0+1]
-    lda [wCurX], [wMapObject0+2]
-    lda [wCurX+1], [wMapObject0+3]
-    call FillCollisionMap
-    ; overlay player collision mask
-    ;ld hl, PlayerCollisionMask
-    ld hl, wCollisionTestMap
-    ld a, [wMapObject0]
+PreparePlayerCollisionMap:
+    ld de, wCollisionTestMap2
+    ld hl, PlayerCollisionMask
+    ld a, [wCurY]
     and %00000111
-    ld c, a
-    ld b, 0
-    add hl, bc
+    xor %00000111
+    add l
+    ld l, a
+    jr nc, .ncy
+    inc h
+.ncy
+    ld b, 8
+.topleftloop
+    ld a, [hli]
+    ld [de], a
+    inc de
+    djnz .topleftloop
+    ld b, 8
+    xor a
+.toprightloop
+    ld [de], a
+    inc de
+    djnz .toprightloop
+    ld b, 8
+.bototmleftloop
+    ld a, [hli]
+    ld [de], a
+    inc de
+    djnz .bototmleftloop
+    ld b, 8
+    xor a
+.bottomrightloop
+    ld [de], a
+    inc de
+    djnz .bottomrightloop
+    
+    ld hl, wCollisionTestMap2
+    ld de, wCollisionTestMap2+8
+    ld c, 8
+.loopy
+    ld a, [wCurX]
+    and %00000111
+    jr z, .donex
+    ld b, a
+.loopx
+    srl [hl]
+    ld a, [de]
+    rr a
+    ld [de], a
+    dec b
+    jr nz, .loopx
+.donex
+    inc hl
+    inc de
+    dec c
+    jr nz, .loopy
+    
+    ld hl, wCollisionTestMap2+16
+    ld de, wCollisionTestMap2+24
+    ld c, 8
+.loopybottom
+    ld a, [wCurX]
+    and %00000111
+    jr z, .donexbottom
+    ld b, a
+.loopxbottom
+    srl [hl]
+    ld a, [de]
+    rr a
+    ld [de], a
+    dec b
+    jr nz, .loopxbottom
+.donexbottom
+    inc hl
+    inc de
+    dec c
+    jr nz, .loopybottom
+    ret
+
+IsSpriteAtWall:
+    ld a, [wMapObject0]
+    add a, 8
+    ld [wCurY], a
+    ld a, [wMapObject0+1]
+    adc a, 0
+    ld [wCurY+1], a
     
     ld a, [wMapObject0+2]
-    and %00000111
+    add a, 4
+    ld [wCurX], a
+    ld a, [wMapObject0+3]
+    adc a, 0
+    ld [wCurX+1], a
+    call FillCollisionMap
+    
+    call PreparePlayerCollisionMap
+    
+    ld b, 8*4
+    ld de, wCollisionTestMap
+    ld hl, wCollisionTestMap2
 .loop
-    rlc [hl]
-    dec a
-    jr nz, .loop
-    bit 0, [hl]
+    ld a, [de]
+    and [hl]
+    ret nz
+    inc de
+    inc hl
+    djnz .loop
     
     ret
 
@@ -744,14 +826,18 @@ Melodingo:
 MelodingoEnd
 
 PlayerCollisionMask:
-    db %00000000
-    db %00000000
-    db %00000000
+    db 0, 0, 0, 0, 0, 0, 0, 0 ; padding
+    
     db %00000000
     db %01111110
     db %11111111
     db %11111111
+    db %11111111
+    db %11111111
+    db %11111111
     db %01111110
+    
+    db 0, 0, 0, 0, 0, 0, 0, 0 ; padding
 
 TileCollisions:
     db 0, 0, 0, 2, 4, 5, 4, 5, 1, 0, 0, 0, 0, 0, 0, 0
