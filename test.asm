@@ -319,7 +319,53 @@ MoveObject:
     jr nz, .move
     xor a
     ld [wMapObject0+7], a
+    ret
 .move
+    call MoveObjectTryDirection
+    ld a, [wMoved]
+    and a
+    ;jr .moved
+    jr nz, .moved
+    ld a, [wMapObject0+6]
+    ld c, a
+    ld b, 0
+    ld hl, NextDirections
+    add hl, bc
+    add hl, bc
+    ld a, [hli]
+    push hl
+    call MoveObjectTryDirection
+    pop hl
+    ld a, [wMoved]
+    and a
+    jr nz, .moved
+    
+    ld a, [hli]
+    call MoveObjectTryDirection
+    ld a, [wMoved]
+    and a
+    jr nz, .moved
+    
+    xor a
+    ld [wMapObject0+7], a
+    ret
+    
+.moved    
+    ld hl, wMapObject0+7
+    ld a, [hl]
+    inc a
+    ld [hl], a
+    cp 32
+    ret c
+    dec [hl]
+    ret
+ 
+MoveObjectTryDirection:
+    push af
+    xor a
+    lda [wMoved], a
+    pop af
+    
     ld hl, Directions
     ld c, a
     ld b, 0
@@ -346,54 +392,44 @@ MoveObject:
     push bc
     ld a, [wMoveVert]
     call .doDirection
-    jr z, .hor
-    lda [wTestObjectY], [wNewPosition+1]
-    lda [wTestObjectY+1], [wNewPosition+2]
-    lda [wTestObjectX], [wMapObject0+4]
-    lda [wTestObjectX+1], [wMapObject0+5]
-    push de
-    push hl
-    call IsSpriteAtWall
-    pop hl
-    pop de
-    jr nz, .hor
-    lda [wMapObject0], [wNewPosition]
-    lda [wMapObject0+1], [wNewPosition+1]
-    lda [wMapObject0+2], [wNewPosition+2]
-.hor
+    lda [wNewPositionBackup], [wNewPosition]
+    lda [wNewPositionBackup+1], [wNewPosition+1]
+    lda [wNewPositionBackup+2], [wNewPosition+2]
     pop bc
     
     ld a, [wMoveHor]
     call .doDirection
-    jr z, .nohor
     
-    lda [wTestObjectY], [wMapObject0+1]
-    lda [wTestObjectY+1], [wMapObject0+2]
-    lda [wTestObjectX], [wNewPosition+1]
+    lda [wTestObjectY  ], [wNewPositionBackup+1]
+    lda [wTestObjectY+1], [wNewPositionBackup+2]
+    lda [wTestObjectX  ], [wNewPosition+1]
     lda [wTestObjectX+1], [wNewPosition+2]
+    
     call IsSpriteAtWall
-    jr nz, .nohor
+    jr nz, .nowrite
+    lda [wMoved], 1
+    lda [wMapObject0], [wNewPositionBackup]
+    lda [wMapObject0+1], [wNewPositionBackup+1]
+    lda [wMapObject0+2], [wNewPositionBackup+2]
     lda [wMapObject0+3], [wNewPosition]
     lda [wMapObject0+4], [wNewPosition+1]
     lda [wMapObject0+5], [wNewPosition+2]
     
-.nohor
-    
-    ld hl, wMapObject0+7
-    ld a, [hl]
-    inc a
-    ld [hl], a
-    cp 32
-    ret c
-    dec [hl]
+    ret
+.nowrite
+    xor a
+    ld [wMoved], a
     ret
     
 .doDirection
     and a
     jr nz, .dodirection
 .skip
+    lda [wNewPosition], [de]
     inc de
+    lda [wNewPosition+1], [de]
     inc de
+    lda [wNewPosition+2], [de]
     inc de
     xor a
     ret
@@ -464,40 +500,58 @@ MoveObject:
 
 Directions:
     ;   y   x
-    db  0,  0 ; 0000   none
-    db  0,  1 ; 0001   right 
-    db  0, -1 ; 0010   left
-    db  0,  0 ; 0011   right/left
-    db -1,  0 ; 0100   up
-    db -1,  1 ; 0101   up/right
-    db -1, -1 ; 0110   up/left
-    db  0,  0 ; 0111 X up/left/right
-    db  1,  0 ; 1000   down
-    db  1,  1 ; 1001   down/right 
-    db  1, -1 ; 1010   down/left
-    db  0,  0 ; 1011 X down/left/right
-    db  0,  0 ; 1100 X down/up
-    db  0,  0 ; 1101 X down/up/right
-    db  0,  0 ; 1110 X down/up/left
-    db  0,  0 ; 1111 X down/up/left/right
+    db  0,  0 ; 0 0000   none
+    db  0,  1 ; 1 0001   right 
+    db  0, -1 ; 2 0010   left
+    db  0,  0 ; 3 0011   right/left
+    db -1,  0 ; 4 0100   up
+    db -1,  1 ; 5 0101   up/right
+    db -1, -1 ; 6 0110   up/left
+    db  0,  0 ; 7 0111 X up/left/right
+    db  1,  0 ; 8 1000   down
+    db  1,  1 ; 9 1001   down/right 
+    db  1, -1 ; a 1010   down/left
+    db  0,  0 ; b 1011 X down/left/right
+    db  0,  0 ; c 1100 X down/up
+    db  0,  0 ; d 1101 X down/up/right
+    db  0,  0 ; e 1110 X down/up/left
+    db  0,  0 ; f 1111 X down/up/left/right
+
+NextDirections:
+    db $0, $0 ; 0 0000   none
+    db $5, $9 ; 1 0001   right 
+    db $6, $a ; 2 0010   left
+    db $0, $0 ; 3 0011   right/left
+    db $6, $5 ; 4 0100   up
+    db $4, $1 ; 5 0101   up/right
+    db $2, $4 ; 6 0110   up/left
+    db $0, $0 ; 7 0111 X up/left/right
+    db $a, $9 ; 8 1000   down
+    db $1, $8 ; 9 1001   down/right 
+    db $2, $8 ; a 1010   down/left
+    db $0, $0 ; b 1011 X down/left/right
+    db $0, $0 ; c 1100 X down/up
+    db $0, $0 ; d 1101 X down/up/right
+    db $0, $0 ; e 1110 X down/up/left
+    db $0, $0 ; f 1111 X down/up/left/right
 
 MovementSteps:
-    dw 0
+    dw 1
 x = 0.0
 rept 32
     ; DIV(x, 12.0)
     ;dw SIN(0.0) >> 16
     ;printf SIN(MUL( x<<6, DIV(256.0, 16.0) ))
     ;PRINTT "\n"
-    dw     SIN(MUL( x<<6, DIV(256.0, 32.0) )) >> 8
+    dw     (SIN(MUL( x<<6, DIV(256.0, 32.0) )) >> 8)+1
 x = x + 1.0
 endr
 
 MovementStepsDiag:
-    dw 0
+    dw 1
 x = 0.0
 rept 32
-    dw     DIV(SIN(MUL( x<<6, DIV(256.0, 32.0) )), 1.41421356237) >> 8
+    dw     (DIV(SIN(MUL( x<<6, DIV(256.0, 32.0) )), 1.41421356237) >> 8)+1
 x = x + 1.0
 endr
 

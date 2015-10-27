@@ -35,8 +35,10 @@ wCollisionTestMap2: ds 8*4
 
 wMoveHor: db
 wMoveVert: db
+wMoved: db
 
 wNewPosition: ds 3
+wNewPositionBackup: ds 3
 
 wTestObjectY: dw
 wTestObjectX: dw
