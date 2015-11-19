@@ -43,6 +43,8 @@ wNewPositionBackup: ds 3
 wTestObjectY: dw
 wTestObjectX: dw
 
+wMenuOpen: db
+
 SECTION "Map Objects",WRAM0[$c400]
 wMapObject0:
 .ysub: db

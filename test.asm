@@ -61,6 +61,8 @@ VBlankHandler:
     call GetRNG
     lda [rSCY], [H_SCY]
     lda [rSCX], [H_SCX]
+    lda [rWY], [H_WY]
+    lda [rWX], [H_WX]
     lda [H_PASTVBLANK], 1
     pop hl
     pop de
@@ -178,7 +180,7 @@ Start:
     ld [H_SCX], a
     ld [H_SCY], a
     
-    ld a, %11000111
+    ld a, %11100111
     ld [rLCDC], a
     ld a, %00001000
     ld [rSTAT], a
@@ -256,6 +258,10 @@ InitGame:
     xor a
     ld [H_SCX], a
     ld [H_SCY], a
+    ld a, 160
+    ld [H_WX], a
+    ld a, 144
+    ld [H_WY], a
     refreshscreen
 .here
     halt
@@ -272,6 +278,12 @@ StartGame:
     
     copy $9010, Tileset
     copy $8000, Melodingo
+    copy $8b00, MenuIcons
+    
+    copy $9c00, MenuTilemap0
+    copy $9c20, MenuTilemap1
+    copy $9c40, MenuTilemap2
+    copy $9c60, MenuTilemap3
     ld b, 0
     ld c, 0
 .loadtilemaploop
@@ -301,17 +313,24 @@ StartGame:
     xor a
     ld [wTmpSpriteWidth], a
     ld [wTmpSpriteHeight], a
-    ld a, [H_JOY]
-    swap a
-    and %00001111
-    ld [wMapObject0+6], a
-    call MoveObject
+    call MovePlayer
     call CameraTowardsSprite
     call UpdateSprites
+    call DoOWMenu
     lda [H_SCY], [wCameraY]
     lda [H_SCX], [wCameraX]
     ;jpjoynew START, .return
     jr .loop
+
+MovePlayer:
+    ld a, [wMenuOpen]
+    and a
+    ret nz
+    ld a, [H_JOY]
+    swap a
+    and %00001111
+    ld [wMapObject0+6], a
+    jp MoveObject
 
 MoveObject:
     ld a, [wMapObject0+6]
@@ -1075,6 +1094,23 @@ Melodingo:
     INCBIN "gfx/melodingo_small.interleave.2bpp"
 MelodingoEnd
 
+MenuIcons:
+    INCBIN "gfx/menuicons.2bpp"
+MenuIconsEnd
+
+MenuTilemap0:
+    db $b0, $b1, $00,   $b2, $b3, $00,   $b4, $b5, $00,   $b6, $b7, $00,   $b8, $b9, $00
+MenuTilemap0End
+MenuTilemap1:
+    db $c0, $c1, $00,   $c2, $c3, $00,   $c4, $c5, $00,   $c6, $c7, $00,   $c8, $c9, $00
+MenuTilemap1End
+MenuTilemap2:
+    db $d0, $d1, $00,   $d2, $d3, $00,   $d4, $d5, $00,   $d6, $d7, $00,   $d8, $d9, $00
+MenuTilemap2End
+MenuTilemap3:
+    db $e0, $e1, $00,   $e2, $e3, $00,   $e4, $e5, $00,   $e6, $e7, $00,   $e8, $e9, $00
+MenuTilemap3End
+
 PlayerCollisionMask:
     db 0, 0, 0, 0, 0, 0, 0, 0 ; padding
     
@@ -1202,5 +1238,62 @@ TileCollisionMasks:
     db %11100000
     db %11000000
     db %10000000
+
+DoOWMenu:
+    ld a, [wMenuOpen]
+    and a
+    jr nz, .isopen
+    ld a, [H_JOYNEW]
+    bit A_, a
+    ret z
+    lda [wMenuOpen], 1
+
+    lda [H_WY], 160-32
+    lda [H_WX], 32+16+8
+    ret
+
+.isopen
+    ld a, [H_JOYNEW]
+    bit A_, a
+    jr nz, .close
+        
+    lda [H_WY], 160-32-16
+    ret
+    
+.close
+    xor a
+    ld [wMenuOpen], a
+    lda [H_WX], 160
+    lda [H_WY], 144
+    
+    
+    ret
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
