@@ -317,7 +317,11 @@ MoveObject:
     ld a, [wMapObject0+6]
     and a
     jr nz, .move
+    ld a, [wMapObject0+7]
+    sub 2
+    jr nc, .not0
     xor a
+.not0
     ld [wMapObject0+7], a
     ret
 .move
@@ -346,7 +350,9 @@ MoveObject:
     and a
     jr nz, .moved
     
-    xor a
+    ld a, [wMapObject0+7]
+    sub 1
+    ret c
     ld [wMapObject0+7], a
     ret
     
@@ -503,7 +509,7 @@ Directions:
     db  0,  0 ; 0 0000   none
     db  0,  1 ; 1 0001   right 
     db  0, -1 ; 2 0010   left
-    db  0,  0 ; 3 0011   right/left
+    db  0,  0 ; 3 0011 X right/left
     db -1,  0 ; 4 0100   up
     db -1,  1 ; 5 0101   up/right
     db -1, -1 ; 6 0110   up/left
@@ -521,7 +527,7 @@ NextDirections:
     db $0, $0 ; 0 0000   none
     db $5, $9 ; 1 0001   right 
     db $6, $a ; 2 0010   left
-    db $0, $0 ; 3 0011   right/left
+    db $0, $0 ; 3 0011 X right/left
     db $6, $5 ; 4 0100   up
     db $4, $1 ; 5 0101   up/right
     db $2, $4 ; 6 0110   up/left
@@ -536,7 +542,7 @@ NextDirections:
     db $0, $0 ; f 1111 X down/up/left/right
 
 MovementSteps:
-    dw 1
+    dw 2
 x = 0.0
 rept 32
     ; DIV(x, 12.0)
@@ -548,7 +554,7 @@ x = x + 1.0
 endr
 
 MovementStepsDiag:
-    dw 1
+    dw 2
 x = 0.0
 rept 32
     dw     (DIV(SIN(MUL( x<<6, DIV(256.0, 32.0) )), 1.41421356237) >> 8)+1
@@ -1078,8 +1084,8 @@ PlayerCollisionMask:
     db %11111111
     db %11111111
     db %11111111
-    db %11111111
     db %01111110
+    db %00000000
     
     db 0, 0, 0, 0, 0, 0, 0, 0 ; padding
 
