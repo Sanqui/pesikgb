@@ -277,7 +277,7 @@ StartGame:
     call DisableLCD
     
     copy $9010, Tileset
-    copy $8000, Melodingo
+    copy $8000, PesikGfx
     copy $8b00, MenuIcons
     copy $8700, SelectorGfx
     
@@ -864,6 +864,21 @@ UpdateSprites:
     sla a
     sla a
     ld [hli], a
+    
+    lda [hli], [wTmpSpriteY]
+    ld a, [wTmpSpriteX]
+    add 16
+    ld [hli], a
+    ld a, 4
+    add c
+    sub b
+    ld [hli], a
+    ld a, b
+    sla a
+    sla a
+    sla a
+    sla a
+    ld [hli], a
     jr .end
     
 .skip2
@@ -1091,9 +1106,7 @@ Tilemap:
     INCBIN "maps/test.bin"
 TilemapEnd
 
-Melodingo:
-    INCBIN "gfx/melodingo_small.interleave.2bpp"
-MelodingoEnd
+    incdata PesikGfx, "gfx/pesik.interleave.2bpp"
 
 MenuIcons:
     INCBIN "gfx/menuicons.2bpp"
