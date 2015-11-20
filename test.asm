@@ -279,6 +279,7 @@ StartGame:
     copy $9010, Tileset
     copy $8000, Melodingo
     copy $8b00, MenuIcons
+    copy $8700, SelectorGfx
     
     copy $9c00, MenuTilemap0
     copy $9c20, MenuTilemap1
@@ -1098,6 +1099,8 @@ MenuIcons:
     INCBIN "gfx/menuicons.2bpp"
 MenuIconsEnd
 
+    incdata SelectorGfx, "gfx/selector.interleave.2bpp"
+
 MenuTilemap0:
     db $b0, $b1, $00,   $b2, $b3, $00,   $b4, $b5, $00,   $b6, $b7, $00,   $b8, $b9, $00
 MenuTilemap0End
@@ -1256,15 +1259,87 @@ DoOWMenu:
     ld a, [H_JOYNEW]
     bit A_, a
     jr nz, .close
+    bit LEFT, a
+    jr nz, .left
+    bit RIGHT, a
+    jr nz, .right
+    bit UP, a
+    jr nz, .up
+    bit DOWN, a
+    jr nz, .down
+    jr .draw
+.left
+    ld a, [wMenuOption]
+    sub 1
+    jr c, .draw
+    ld [wMenuOption], a
+    jr .draw
+.right
+    ld a, [wMenuOption]
+    inc a
+    cp 9
+    jr nc, .draw
+    ld [wMenuOption], a
+    jr .draw
+.up
+.down
+.draw
+    ld hl, W_OAM + 4 * $26
+    
+    ld d, 0
+    ld a, [wMenuOption]
+    cp 5
+    jr c, .notrow2
+    ld d, 16
+.notrow2
+    ld a, 160-32
+    add d
+    ld [hli], a
+    ld a, [wMenuOption]
+    sub 5
+    jr nc, .row2
+    add 5
+.row2
+    ld b, a
+    sla a
+    sla a
+    sla a
+    ld b, a
+    sla a
+    add b
+    add 32+16+8
+    push af
+    ld [hli], a
+    ld a, $70
+    ld [hli], a
+    xor a
+    ld [hli], a
+    
+    ld a, 160-32
+    add d
+    ld [hli], a
+    pop af
+    add 16
+    ld [hli], a
+    ld a, $72
+    ld [hli], a
+    xor a
+    ld [hl], a
+    
+    
         
     lda [H_WY], 160-32-16
     ret
+    
     
 .close
     xor a
     ld [wMenuOpen], a
     lda [H_WX], 160
     lda [H_WY], 144
+    ld a, 160
+    ld [W_OAM + 4 * $26], a
+    ld [W_OAM + 4 * $27], a
     
     
     ret

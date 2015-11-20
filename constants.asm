@@ -271,6 +271,12 @@ signextend: MACRO
 .done\@
 ENDM
 
+incdata: MACRO
+\1:
+    INCBIN \2
+\1End
+ENDM
+
 
 H_TIMER EQU $FFF0
 H_RNG1 EQU $FFF1

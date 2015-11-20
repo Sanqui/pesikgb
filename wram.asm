@@ -44,6 +44,7 @@ wTestObjectY: dw
 wTestObjectX: dw
 
 wMenuOpen: db
+wMenuOption: db
 
 SECTION "Map Objects",WRAM0[$c400]
 wMapObject0:
