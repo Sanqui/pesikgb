@@ -286,6 +286,49 @@ incl: MACRO
 \1End
 ENDM
 
+shiftleft: MACRO
+reptnum = 1
+if _NARG == 2
+reptnum = \2
+endc
+
+rept reptnum
+if "\1" == "bc"
+    sla c
+    rl b
+endc
+if "\1" == "de"
+    sla e
+    rl d
+endc
+if "\1" == "hl"
+    add hl, hl
+endc
+endr
+ENDM
+
+shiftright: MACRO
+reptnum = 1
+if _NARG == 2
+reptnum = \2
+endc
+
+rept reptnum
+if "\1" == "bc"
+    sra b
+    rr c
+endc
+if "\1" == "de"
+    sra d
+    rr e
+endc
+if "\1" == "hl"
+    sra h
+    rr l
+endc
+endr
+ENDM
+
 
 H_TIMER EQU $FFF0
 H_RNG1 EQU $FFF1

@@ -773,11 +773,7 @@ ScrollVert:
     and %11111000
     ld l, a
     
-    ; *4
-    sla l
-    rl h
-    sla l
-    rl h
+    shiftleft hl, 2
     
     push hl
     ld a, h
@@ -803,12 +799,7 @@ ScrollVert:
     add hl, bc
     lda c, [wCameraX]
     lda b, [wCameraX+1]
-    sra b
-    rr c
-    sra b
-    rr c
-    sra b
-    rr c
+    shiftright bc, 3
     dec bc
     add hl, bc
     
@@ -837,11 +828,7 @@ ScrollHor:
     and %11111000
     ld l, a
     
-    ; *4
-    sla l
-    rl h
-    sla l
-    rl h
+    shiftleft hl, 2
     
     push bc ; off
     push hl
@@ -875,12 +862,7 @@ ScrollHor:
     pop bc
     pop hl
     
-    sra b
-    rr c
-    sra b
-    rr c
-    sra b
-    rr c
+    shiftright bc, 3
     add hl, bc
     
     lda [wCopyColDest], e
@@ -1042,21 +1024,11 @@ GetTileAt:
     and %11111000
     ld l, a
     lda h, [wCurY+1]
-    sla l
-    rl h
-    sla l
-    rl h
-    sla l
-    rl h
+    shiftleft hl, 3
     
     lda c, [wCurX]
     lda b, [wCurX+1]
-    sra b
-    rr c
-    sra b
-    rr c
-    sra b
-    rr c
+    shiftright bc, 3
     add hl, bc
     ld bc, Tilemap
     add hl, bc
@@ -1072,12 +1044,7 @@ CopyCollisionMapOfTile:
 .nc
     ld l, [hl]
     ld h, 0
-    sla l
-    rr h
-    sla l
-    rr h
-    sla l
-    rr h
+    shiftleft hl, 3
     ld bc, TileCollisionMasks
     add hl, bc
 rept 8
@@ -1218,9 +1185,6 @@ IsSpriteAtWall:
     incdata TilesetGfx, "gfx/tileset.2bpp"
     incl TilesetPal, "gfx/tileset.pal"
 
-Tilemap:
-    INCBIN "maps/test.bin"
-TilemapEnd
 
     incdata PesikGfx, "gfx/pesik.interleave.2bpp"
     incl PesikPal, "gfx/pesik.interleave.pal"
@@ -1521,6 +1485,9 @@ DefaultOAMPal:
     RGB 0, 0, 0, 0
 DefaultOAMPalEnd
 
+
+SECTION "map", ROMX
+    incdata Tilemap, "maps/test.bin"
 
 
 
