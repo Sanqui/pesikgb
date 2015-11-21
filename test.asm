@@ -54,6 +54,7 @@ VBlankHandler:
     call FastVblank
     call VCopyRow
     call VCopyCol
+    call VCopyGfx
     call $FF80
     call ReadJoypadRegister
     ld hl, H_TIMER
@@ -162,6 +163,24 @@ VCopyCol:
     dec b
     jr nz, .copyloop
     lda [wCopyColAmount], b
+    ret
+
+VCopyGfx:
+    ld a, [wCopyGfxAmount]
+    and a
+    ret z
+    ld b, a
+    lda e, [wCopyGfxDest]
+    lda d, [wCopyGfxDest+1]
+    lda l, [wCopyGfxSrc]
+    lda h, [wCopyGfxSrc+1]
+.copyloop
+    ld a, [hli]
+    ld [de], a
+    inc de
+    dec b
+    jr nz, .copyloop
+    lda [wCopyGfxAmount], b
     ret
 
 INCLUDE "common.asm"
@@ -385,6 +404,14 @@ MoveObject:
     ret
     
 .moved
+    ld a, [wMapObject0+7]
+    and a
+    jr z, .dontanim
+    ld hl, wMapObject0+8
+    call AdvanceSpriteAnim
+.dontanim
+    ld hl, wMapObject0+8
+    call SetSpriteDirection
     ld a, [wMapObject0+6]
     bit 4, a
     jr nz, .slowdown
@@ -403,10 +430,62 @@ MoveObject:
     jr nc, .not0_
     xor a
     ld [wMapObject0+6], a
+    call HandleNewSpriteAnim
+    xor a
 .not0_
     ld [wMapObject0+7], a
     ret
- 
+
+AdvanceSpriteAnim:
+    ld a, [H_TIMER]
+    and %00001111
+    ret nz
+    ld a, [hl]
+    inc a
+    and %01111111
+    cp 4
+    jr c, .notover
+    and %10000000
+.notover
+HandleNewSpriteAnim:
+    ld [hl], a
+    ld hl, PesikGfx
+    ld e, a
+    ld d, 0
+    ld bc, 16*6
+    xor a
+    ld [wCopyGfxDest], a
+    ld a, $80
+    ld [wCopyGfxDest+1], a
+    call ScheduleNewSprite
+    ret
+
+ScheduleNewSprite:
+    inc e
+.getaddressloop
+    dec e
+    jr z, .gotaddress
+    add hl, bc
+    jr .getaddressloop
+.gotaddress
+    lda [wCopyGfxSrc], l
+    lda [wCopyGfxSrc+1], h
+    lda [wCopyGfxAmount], c
+    
+    ret
+
+SetSpriteDirection:
+    ; nah
+    ret
+    ld a, [wMapObject0+6]
+    bit 1, a
+    jr z, .res
+    set 7, [hl]
+    ret
+.res
+    res 7, [hl]
+    ret
+
 MoveObjectTryDirection:
     push af
     xor a
@@ -850,7 +929,9 @@ UpdateSprites:
     inc de
     ld a, [de]
     inc de
-    add a
+    and $80
+    rr a
+    rr a
     ld b, a
     ld a, [de]
     and %00001000
@@ -861,14 +942,8 @@ UpdateSprites:
     lda [hli], [wTmpSpriteY]
     lda [hli], [wTmpSpriteX]
     xor a
-    add c
-    add b
     ld [hli], a
     ld a, b
-    sla a
-    sla a
-    sla a
-    sla a
     ld [hli], a
     
     lda [hli], [wTmpSpriteY]
@@ -876,14 +951,8 @@ UpdateSprites:
     add 8
     ld [hli], a
     ld a, 2
-    add c
-    sub b
     ld [hli], a
     ld a, b
-    sla a
-    sla a
-    sla a
-    sla a
     ld [hli], a
     
     lda [hli], [wTmpSpriteY]
@@ -891,14 +960,8 @@ UpdateSprites:
     add 16
     ld [hli], a
     ld a, 4
-    add c
-    sub b
     ld [hli], a
     ld a, b
-    sla a
-    sla a
-    sla a
-    sla a
     ld [hli], a
     jr .end
     

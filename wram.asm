@@ -21,6 +21,10 @@ wCopyColAmount: ds 1
 wCopyColDest: ds 2
 wCopyColData: ds 8*6
 
+wCopyGfxAmount: ds 1
+wCopyGfxDest: ds 2
+wCopyGfxSrc: ds 3
+
 wTmpSpriteY: ds 1
 wTmpSpriteX: ds 1
 
@@ -54,7 +58,7 @@ wMapObject0:
 .x: dw
 .dir: db
 .step: db
-.spritedir: db
+.sprite: db
 .count: db
 
 SECTION "vwf",WRAM0[$c500]
