@@ -793,8 +793,7 @@ ScrollVert:
     push hl
     pop de
     pop hl
-    sla l
-    rl h
+    shiftleft hl, 2
     ld bc, Tilemap
     add hl, bc
     lda c, [wCameraX]
@@ -849,8 +848,7 @@ ScrollHor:
     push hl
     pop de
     pop hl
-    sla l
-    rl h
+    shiftleft hl, 2
     ld bc, Tilemap
     add hl, bc
     pop bc
@@ -875,7 +873,7 @@ ScrollHor:
     ld [de], a
     inc de
     push bc
-    ld bc, 64
+    ld bc, 128
     add hl, bc
     pop bc
     dec b
@@ -1024,7 +1022,7 @@ GetTileAt:
     and %11111000
     ld l, a
     lda h, [wCurY+1]
-    shiftleft hl, 3
+    shiftleft hl, 4
     
     lda c, [wCurX]
     lda b, [wCurX+1]
@@ -1059,7 +1057,7 @@ FillCollisionMap:
     ld de, wCollisionTestMap
     inc hl
     call CopyTwoCollisionTiles
-    ld bc, 64 - 1
+    ld bc, 128 - 1
     add hl, bc
     ld a, [hli]
 CopyTwoCollisionTiles:
