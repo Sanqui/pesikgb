@@ -67,6 +67,9 @@ OAM EQU $FE00
 W_TILEMAP EQU $C000
 W_OAM EQU $C200
 
+RGB: MACRO
+    dw (\3 << 10 | \2 << 5 | \1)
+    ENDM
 
 ;\1 = X
 ;\2 = Y
@@ -274,6 +277,12 @@ ENDM
 incdata: MACRO
 \1:
     INCBIN \2
+\1End
+ENDM
+
+incl: MACRO
+\1:
+    INCLUDE \2
 \1End
 ENDM
 

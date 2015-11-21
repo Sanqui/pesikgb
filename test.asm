@@ -55,6 +55,7 @@ VBlankHandler:
     call VCopyRow
     call VCopyCol
     call VCopyGfx
+    call VCopyPal
     call $FF80
     call ReadJoypadRegister
     ld hl, H_TIMER
@@ -183,6 +184,32 @@ VCopyGfx:
     lda [wCopyGfxAmount], b
     ret
 
+VCopyPal:
+    ld a, [wCopyPal]
+    and a
+    ret z
+    ld a, $80
+    ld [rBGPI], a
+    ld c, rBGPD & $00ff
+    ld hl, wBGPal
+    ld b, 8*8
+.loop
+    ld a, [hli]
+    ld [c], a
+    djnz .loop
+    
+    ld a, $80
+    ld [rOBPI], a
+    ld c, rOBPD & $00ff
+    ld b, 8*8
+.loopo
+    ld a, [hli]
+    ld [c], a
+    djnz .loopo
+    xor a
+    ld [wCopyPal], a
+    ret
+
 INCLUDE "common.asm"
 INCLUDE "vwf.asm"
 
@@ -243,6 +270,9 @@ Start:
     
     ; set up ingame graphics
     copy $8f00, BoxChars, $0100
+    copy wBGPal, DefaultBGPal
+    copy wOAMPal, DefaultOAMPal
+    lda [wCopyPal], 1
         
     call EnableLCD
     
@@ -296,7 +326,9 @@ StartGame:
     call DisableLCD
     
     copy $9010, Tileset
-    copy $8000, PesikGfx
+    ;copy $8000, PesikGfx
+    copy wOAMPal, PesikPal
+    lda [wCopyPal], 1
     copy $8b00, MenuIcons
     copy $8700, SelectorGfx
     
@@ -1160,7 +1192,7 @@ IsSpriteAtWall:
     ld [wCurY+1], a
     
     ld a, [wTestObjectX]
-    add a, 4
+    add a, 8
     ld [wCurX], a
     ld a, [wTestObjectX+1]
     adc a, 0
@@ -1191,6 +1223,7 @@ Tilemap:
 TilemapEnd
 
     incdata PesikGfx, "gfx/pesik.interleave.2bpp"
+    incl PesikPal, "gfx/pesik.interleave.pal"
 
 MenuIcons:
     INCBIN "gfx/menuicons.2bpp"
@@ -1441,7 +1474,18 @@ DoOWMenu:
     
     ret
 
-
+DefaultBGPal:
+    RGB 31, 31, 31
+    RGB 32/3 * 2, 30, 32/3 * 2
+    RGB 32/3, 18, 32/3
+    RGB 0, 0, 0, 0
+DefaultBGPalEnd
+DefaultOAMPal:
+    RGB 31, 31, 31
+    RGB 31, 31, 31
+    RGB 32/3 * 2, 32/3 * 2, 32/3 * 2
+    RGB 0, 0, 0, 0
+DefaultOAMPalEnd
 
 
 

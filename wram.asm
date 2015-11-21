@@ -1,5 +1,5 @@
-SECTION "WRAMBank0",WRAM0[$c000]
-
+SECTION "tilemap, sprites",WRAM0[$c000]
+    ds $300
 SECTION "misc",WRAM0[$c300]
 wSPtmp: ds 2
 wMenuChoice: ds 1
@@ -24,6 +24,8 @@ wCopyColData: ds 8*6
 wCopyGfxAmount: ds 1
 wCopyGfxDest: ds 2
 wCopyGfxSrc: ds 3
+
+wCopyPal: ds 1
 
 wTmpSpriteY: ds 1
 wTmpSpriteX: ds 1
@@ -89,3 +91,8 @@ wVWFBuildArea3:
     ds 8
 SECTION "vwfcopy",WRAM0[$c540]
 wVWFCopyArea:
+SECTION "palettes", WRAM0
+wBGPal:
+    ds 8*8
+wOAMPal:
+    ds 8*8
