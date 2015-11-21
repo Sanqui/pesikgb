@@ -325,7 +325,8 @@ StartGame:
     
     call DisableLCD
     
-    copy $9010, Tileset
+    copy $9010, TilesetGfx
+    copy wBGPal, TilesetPal
     ;copy $8000, PesikGfx
     copy wOAMPal, PesikPal
     lda [wCopyPal], 1
@@ -1214,9 +1215,8 @@ IsSpriteAtWall:
     
     ret
 
-Tileset:
-    INCBIN "gfx/tileset.2bpp"
-TilesetEnd
+    incdata TilesetGfx, "gfx/tileset.2bpp"
+    incl TilesetPal, "gfx/tileset.pal"
 
 Tilemap:
     INCBIN "maps/test.bin"
@@ -1259,8 +1259,14 @@ PlayerCollisionMask:
     db 0, 0, 0, 0, 0, 0, 0, 0 ; padding
 
 TileCollisions:
-    db 0, 0, 0, 2, 4, 5, 8, 9, 1, 0, 0, 0, 0, 0, 0, 0
-    db 0, 0, 0, 0, 6, 7,10,11, 0, 0, 0, 0, 0, 0, 0, 0
+    db 0, 0, 0, 0, 0, 0, 0, 0, 4, 1, 5, 0, 0, 0, 0, 0
+    db 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 7, 0, 0, 0, 0, 0
+    db 0, 0,12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    db 0, 0, 0, 0, 0,14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    db 0, 0, 0, 0, 0,13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 TileCollisionMasks:
 ; 0 empty
@@ -1371,6 +1377,34 @@ TileCollisionMasks:
     db %11100000
     db %11000000
     db %10000000
+; 12 bush bottom
+    db %11111111
+    db %11111111
+    db %01111110
+    db %00111100
+    db %00000000
+    db %00000000
+    db %00000000
+    db %00000000
+; 13 tree bottom
+    db %11111111
+    db %11111111
+    db %11111111
+    db %11111111
+    db %11111111
+    db %11111111
+    db %11111110
+    db %00000000
+; 14 tree trunk
+    db %00011111
+    db %00011111
+    db %00011111
+    db %00011111
+    db %00011111
+    db %00011111
+    db %00011111
+    db %00011111
+
 
 DoOWMenu:
     ld a, [wMenuOpen]
