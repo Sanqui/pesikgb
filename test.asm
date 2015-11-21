@@ -330,7 +330,13 @@ MovePlayer:
     ld a, [H_JOY]
     swap a
     and %00001111
+    and a
+    jr z, .stopmoving
     ld [wMapObject0+6], a
+    jp MoveObject
+.stopmoving
+    ld hl, wMapObject0+6
+    set 4, [hl]
     jp MoveObject
 
 MoveObject:
@@ -345,12 +351,14 @@ MoveObject:
     ld [wMapObject0+7], a
     ret
 .move
+    res 4, a
     call MoveObjectTryDirection
     ld a, [wMoved]
     and a
     ;jr .moved
     jr nz, .moved
     ld a, [wMapObject0+6]
+    res 4, a
     ld c, a
     ld b, 0
     ld hl, NextDirections
@@ -376,7 +384,11 @@ MoveObject:
     ld [wMapObject0+7], a
     ret
     
-.moved    
+.moved
+    ld a, [wMapObject0+6]
+    bit 4, a
+    jr nz, .slowdown
+    
     ld hl, wMapObject0+7
     ld a, [hl]
     inc a
@@ -384,6 +396,15 @@ MoveObject:
     cp 32
     ret c
     dec [hl]
+    ret
+.slowdown
+    ld a, [wMapObject0+7]
+    sub 2
+    jr nc, .not0_
+    xor a
+    ld [wMapObject0+6], a
+.not0_
+    ld [wMapObject0+7], a
     ret
  
 MoveObjectTryDirection:
