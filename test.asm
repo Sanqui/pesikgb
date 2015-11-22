@@ -304,8 +304,9 @@ NewGameMenu:
 
 InitGame:
     call ClearTilemap
-    printstatic $00, $0f, 1, 5, "RPG engine test@"
+    printstatic $00, $0f, 1, 5, "Pesik@"
     printstatic $10, $20, $11, 0, "Sanky 2015@"
+    printstatic $20, $20, 10, 4, "Do not distribute@"
     xor a
     ld [H_SCX], a
     ld [H_SCY], a
@@ -471,17 +472,50 @@ MoveObject:
     ld [wMapObject0+7], a
     ret
 
+DirectionsToSpriteIndices:
+    db   0 ; 0 0000   none
+    db   0 ; 1 0001   right 
+    db   4 ; 2 0010   left
+    db   0 ; 3 0011 X right/left
+    db   6 ; 4 0100   up
+    db   7 ; 5 0101   up/right
+    db   5 ; 6 0110   up/left
+    db   0 ; 7 0111 X up/left/right
+    db   2 ; 8 1000   down
+    db   1 ; 9 1001   down/right 
+    db   3 ; a 1010   down/left
+    db   0 ; b 1011 X down/left/right
+    db   0 ; c 1100 X down/up
+    db   0 ; d 1101 X down/up/right
+    db   0 ; e 1110 X down/up/left
+    db   0 ; f 1111 X down/up/left/right
+    
+
 AdvanceSpriteAnim:
     ld a, [H_TIMER]
     and %00001111
     ret nz
+;AdvanceSpriteAnimForce:
     ld a, [hl]
+    and %00000011
     inc a
-    and %01111111
     cp 4
     jr c, .notover
-    and %10000000
+    xor a
 .notover
+    ld b, a
+    ld a, [wMapObject0+6]
+    and %00001111
+    push hl
+    ld hl, DirectionsToSpriteIndices
+    ld e, a
+    ld d, 0
+    add hl, de
+    ld a, [hl]
+    pop hl
+    sla a
+    sla a
+    add b
 HandleNewSpriteAnim:
     cp [hl]
     ret z
