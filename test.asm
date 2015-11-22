@@ -176,9 +176,11 @@ VCopyGfx:
     lda l, [wCopyGfxSrc]
     lda h, [wCopyGfxSrc+1]
 .copyloop
+rept 16
     ld a, [hli]
     ld [de], a
     inc de
+endr
     dec b
     jr nz, .copyloop
     lda [wCopyGfxAmount], b
@@ -327,7 +329,7 @@ StartGame:
     
     copy $9010, TilesetGfx
     copy wBGPal, TilesetPal
-    ;copy $8000, PesikGfx
+    copy $8000, PesikGfx, 16*6
     copy wOAMPal, PesikPal
     lda [wCopyPal], 1
     copy $8b00, MenuIcons
@@ -481,6 +483,8 @@ AdvanceSpriteAnim:
     and %10000000
 .notover
 HandleNewSpriteAnim:
+    cp [hl]
+    ret z
     ld [hl], a
     ld hl, PesikGfx
     ld e, a
@@ -503,6 +507,10 @@ ScheduleNewSprite:
 .gotaddress
     lda [wCopyGfxSrc], l
     lda [wCopyGfxSrc+1], h
+    sra c
+    sra c
+    sra c
+    sra c
     lda [wCopyGfxAmount], c
     
     ret
