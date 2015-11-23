@@ -134,6 +134,9 @@ VCopyRow:
 .decb
     dec b
     jr nz, .copyloop
+    ld a, [rLY]
+    cp $90
+    ret c
     lda [wCopyRowAmount], b
     ret
 
@@ -163,6 +166,9 @@ VCopyCol:
 .decb
     dec b
     jr nz, .copyloop
+    ld a, [rLY]
+    cp $90
+    ret c
     lda [wCopyColAmount], b
     ret
 
@@ -183,6 +189,9 @@ rept 16
 endr
     dec b
     jr nz, .copyloop
+    ld a, [rLY]
+    cp $90
+    ret c
     lda [wCopyGfxAmount], b
     ret
 
@@ -208,6 +217,9 @@ VCopyPal:
     ld a, [hli]
     ld [c], a
     djnz .loopo
+    ld a, [rLY]
+    cp $90
+    ret c
     xor a
     ld [wCopyPal], a
     ret
@@ -433,6 +445,12 @@ MoveObject:
     and a
     jr nz, .moved
     
+    ld a, [hli]
+    call MoveObjectTryDirection
+    ld a, [wMoved]
+    and a
+    jr nz, .moved
+    
     ld a, [wMapObject0+7]
     sub 1
     ret c
@@ -440,14 +458,11 @@ MoveObject:
     ret
     
 .moved
-    ld a, [wMapObject0+7]
-    and a
-    jr z, .dontanim
-    ld hl, wMapObject0+8
+    ;ld a, [wMapObject0+7]
+    ;and a
+    ;jr z, .dontanim
     call AdvanceSpriteAnim
-.dontanim
-    ld hl, wMapObject0+8
-    call SetSpriteDirection
+;.dontanim
     ld a, [wMapObject0+6]
     bit 4, a
     jr nz, .slowdown
@@ -464,9 +479,11 @@ MoveObject:
     ld a, [wMapObject0+7]
     sub 2
     jr nc, .not0_
-    xor a
-    ld [wMapObject0+6], a
-    call HandleNewSpriteAnim
+    ;xor a
+    ;ld [wMapObject0+6], a
+    ;ld a, [wMapObject0+8]
+    ;and %11111100
+    ;ld [wMapObject0+8], a
     xor a
 .not0_
     ld [wMapObject0+7], a
@@ -489,13 +506,23 @@ DirectionsToSpriteIndices:
     db   0 ; d 1101 X down/up/right
     db   0 ; e 1110 X down/up/left
     db   0 ; f 1111 X down/up/left/right
-    
+
 
 AdvanceSpriteAnim:
+    ld a, [wMapObject0+7] ; step
+    and a ; are we moving?
+    jr nz, .moving
+    xor a
+    ld b, a
+    jr .notinc
+.moving
+    ld hl, wMapObject0+8
+    ld a, [hl]
+    and %00000011
+    ld b, a
     ld a, [H_TIMER]
     and %00001111
-    ret nz
-;AdvanceSpriteAnimForce:
+    jr nz, .notinc
     ld a, [hl]
     and %00000011
     inc a
@@ -504,6 +531,7 @@ AdvanceSpriteAnim:
     xor a
 .notover
     ld b, a
+.notinc
     ld a, [wMapObject0+6]
     and %00001111
     push hl
@@ -549,19 +577,9 @@ ScheduleNewSprite:
     
     ret
 
-SetSpriteDirection:
-    ; nah
-    ret
-    ld a, [wMapObject0+6]
-    bit 1, a
-    jr z, .res
-    set 7, [hl]
-    ret
-.res
-    res 7, [hl]
-    ret
-
 MoveObjectTryDirection:
+    and a
+    ret z
     push af
     xor a
     lda [wMoved], a
@@ -719,22 +737,22 @@ Directions:
     db  0,  0 ; f 1111 X down/up/left/right
 
 NextDirections:
-    db $0, $0 ; 0 0000   none
-    db $5, $9 ; 1 0001   right 
-    db $6, $a ; 2 0010   left
-    db $0, $0 ; 3 0011 X right/left
-    db $6, $5 ; 4 0100   up
-    db $4, $1 ; 5 0101   up/right
-    db $2, $4 ; 6 0110   up/left
-    db $0, $0 ; 7 0111 X up/left/right
-    db $a, $9 ; 8 1000   down
-    db $1, $8 ; 9 1001   down/right 
-    db $2, $8 ; a 1010   down/left
-    db $0, $0 ; b 1011 X down/left/right
-    db $0, $0 ; c 1100 X down/up
-    db $0, $0 ; d 1101 X down/up/right
-    db $0, $0 ; e 1110 X down/up/left
-    db $0, $0 ; f 1111 X down/up/left/right
+    db $0, $0, $0 ; 0 0000   none
+    db $5, $9, $2 ; 1 0001   right 
+    db $6, $a, $1 ; 2 0010   left
+    db $0, $0, $0 ; 3 0011 X right/left
+    db $6, $5, $8 ; 4 0100   up
+    db $4, $1, $a ; 5 0101   up/right
+    db $2, $4, $a ; 6 0110   up/left
+    db $0, $0, $0 ; 7 0111 X up/left/right
+    db $a, $9, $4 ; 8 1000   down
+    db $1, $8, $6 ; 9 1001   down/right 
+    db $2, $8, $5 ; a 1010   down/left
+    db $0, $0, $0 ; b 1011 X down/left/right
+    db $0, $0, $0 ; c 1100 X down/up
+    db $0, $0, $0 ; d 1101 X down/up/right
+    db $0, $0, $0 ; e 1110 X down/up/left
+    db $0, $0, $0 ; f 1111 X down/up/left/right
 
 MovementSteps:
     dw 2
@@ -756,10 +774,6 @@ rept 32
 x = x + 1.0
 endr
 
-AdvanceSpriteMovement:
-    ld hl, wMapObject0+9
-    inc [hl]
-    ret
 
 MoveCameraUp:
     dec16 wCameraY
