@@ -251,10 +251,11 @@ endr
     lda [wCopyGfxAmount], b
     ret
 
-VCopyPal:
+VCopyPal: ; XXX
     ld a, [wCopyPal]
     and a
     ret z
+VCopyPalForce:
     ld a, $80
     ld [rBGPI], a
     ld c, rBGPD & $00ff
@@ -345,7 +346,9 @@ Start:
     copy $8f00, BoxChars, $0100
     copy wBGPal, DefaultBGPal
     copy wOAMPal, DefaultOAMPal
-    lda [wCopyPal], 1
+    call VCopyPalForce
+    xor a
+    ld [wCopyPal], a
         
     call EnableLCD
     
@@ -375,14 +378,17 @@ NewGameMenu:
 InitGame:
     copy $9010, PesikLargeGfx
     copy wBGPal, PesikLargePal
-    lda [wCopyPal], 1
+    call VCopyPalForce
+    xor a
+    ld [wCopyPal], a
     call EnableLCD
     
-    printstatic $00, $0f, 1, 5, "Pesik@"
+    printstatic $00, $0f, 1, 6, "Pesik@"
     printstatic $05, $20, $10, 0, "Code by Sanqui@"
     printstatic $10, $20, $11, 0, "Concept by Behold3r@"
     printstatic $20, $20, $0f, 4, "Do not distribute@"
     
+    ; rect
     ld a, $01
     ld de, 20-7
     hlcoord 8, 2
@@ -427,6 +433,11 @@ StartGame:
     lda [wCopyPal], 1
     copy $8b00, MenuIcons
     copy $8700, SelectorGfx
+    
+    
+    call VCopyPalForce
+    xor a
+    ld [wCopyPal], a
     
     copy $9c00, MenuTilemap0
     copy $9c20, MenuTilemap1
