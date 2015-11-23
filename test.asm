@@ -644,6 +644,7 @@ AdvanceSpriteAnim:
     sla a
     add b
 HandleNewSpriteAnim:
+    ld hl, wMapObject0+8
     cp [hl]
     ret z
     ld [hl], a
