@@ -134,10 +134,37 @@ VCopyRow:
 .decb
     dec b
     jr nz, .copyloop
+    
+    ld a, 1
+    ld [rVBK], a
+    lda b, [wCopyRowAmount]
+    lda e, [wCopyRowDest]
+    lda d, [wCopyRowDest+1]
+    ld hl, wCopyRowDataAttr
+.copyloop_a
+    ld a, [hli]
+    ld [de], a
+    inc de
+    ld a, e
+    and %00011111
+    jr nz, .decb_a
+    ld a, e
+    sub %00100000
+    ld e, a
+    jr nc, .decb_a
+    dec d
+.decb_a
+    dec b
+    jr nz, .copyloop_a
+    
+    xor a
+    ld [rVBK], a
+    
     ld a, [rLY]
     cp $90
     ret c
-    lda [wCopyRowAmount], b
+    xor a
+    ld [wCopyRowAmount], a
     ret
 
 VCopyCol:
@@ -166,6 +193,35 @@ VCopyCol:
 .decb
     dec b
     jr nz, .copyloop
+    
+    ld a, 1
+    ld [rVBK], a
+    lda b, [wCopyColAmount]
+    lda e, [wCopyColDest]
+    lda d, [wCopyColDest+1]
+    ld hl, wCopyColDataAttr
+.copyloop_a
+    ld a, [hli]
+    ld [de], a
+    ld a, e
+    add 32
+    ld e, a
+    jr nc, .decb_a
+    inc d
+    ld a, d
+    cp $9c
+    jr nz, .decb_a
+    dec d
+    dec d
+    dec d
+    dec d
+.decb_a
+    dec b
+    jr nz, .copyloop_a
+    
+    xor a
+    ld [rVBK], a
+    
     ld a, [rLY]
     cp $90
     ret c
@@ -282,6 +338,9 @@ Start:
     
     call WriteDMACodeToHRAM
     
+    lda [wCopyRowDataEnd], $ff
+    ld [wCopyColDataEnd], a
+    
     ; set up ingame graphics
     copy $8f00, BoxChars, $0100
     copy wBGPal, DefaultBGPal
@@ -368,8 +427,8 @@ StartGame:
     
     ld hl, wMapObject0
     lda [hli], 0
-    lda [hli], 120+100+8
-    lda [hli], 0
+    lda [hli], 20
+    lda [hli], 1
     lda [hli], 0
     lda [hli], 80+100+16
     lda [hli], 0
@@ -777,6 +836,25 @@ rept 32
 x = x + 1.0
 endr
 
+AddAttributesForTileData:
+.loop
+    ld a, [hli]
+    cp $ff
+    ret z
+    push hl
+    ld hl, TileAttributes
+    add l
+    ld l, a
+    jr nc, .nc
+    inc h
+.nc
+    ld a, [hl]
+    ld [de], a
+    inc de
+    pop hl
+    jr .loop
+    ret
+
 
 MoveCameraUp:
     dec16 wCameraY
@@ -868,6 +946,10 @@ ScrollVert:
     ld bc, $17
     call CopyData
     
+    ld hl, wCopyRowData
+    ld de, wCopyRowDataAttr
+    call AddAttributesForTileData
+    
     lda [wCopyRowAmount], $17
     ret
 
@@ -937,6 +1019,10 @@ ScrollHor:
     pop bc
     dec b
     jr nz, .copyloop
+    
+    ld hl, wCopyColData
+    ld de, wCopyColDataAttr
+    call AddAttributesForTileData
     
     lda [wCopyColAmount], $13
     ret
@@ -1265,6 +1351,17 @@ MenuTilemap3:
     db $e0, $e1, $00,   $e2, $e3, $00,   $e4, $e5, $00,   $e6, $e7, $00,   $e8, $e9, $00
 MenuTilemap3End
 
+TileAttributes:
+    db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+    db $00, $80, $80, $80, $80, $80, $80, $80, $00, $00, $00, $00, $00, $00, $00, $00
+    db $00, $00, $00, $00, $80, $80, $80, $80, $00, $00, $00, $00, $00, $00, $00, $00
+    db $00, $00, $00, $00, $80, $80, $80, $80, $00, $00, $00, $00, $00, $00, $00, $00
+    db $00, $00, $00, $00, $80, $80, $80, $80, $00, $00, $00, $00, $00, $00, $00, $00
+    db $00, $00, $00, $00, $80, $80, $80, $80, $00, $00, $00, $00, $00, $00, $00, $00
+    db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+    db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+    db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+
 PlayerCollisionMask:
     db 0, 0, 0, 0, 0, 0, 0, 0 ; padding
     
@@ -1280,13 +1377,13 @@ PlayerCollisionMask:
     db 0, 0, 0, 0, 0, 0, 0, 0 ; padding
 
 TileCollisions:
-    db 0, 0, 0, 0, 0, 0, 0, 0, 4, 1, 5, 0, 0, 0, 0, 0
+    db 0, 0, 0, 0, 0, 0, 0, 0, 4, 1, 5, 1, 0, 0, 0, 0
     db 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 7, 0, 0, 0, 0, 0
     db 0, 0,12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    db 0, 0, 0, 0, 0,14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    db 0, 0, 0, 0, 0,13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    db 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 1, 1, 1, 5, 0, 0
+    db 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 1, 1, 0, 0, 5, 0
+    db 0, 0, 0, 0, 0,14, 0, 0, 4, 0, 1, 1, 0, 0, 7, 0
+    db 0, 0, 0, 0, 0,13, 0, 0, 6, 6, 1, 1, 1, 7, 0, 0
     db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 TileCollisionMasks:

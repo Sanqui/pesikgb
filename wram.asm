@@ -16,10 +16,14 @@ wCameraX: ds 2
 wCopyRowAmount: ds 1
 wCopyRowDest: ds 2
 wCopyRowData: ds 32
+wCopyRowDataEnd: ds 1
+wCopyRowDataAttr: ds 32
 
 wCopyColAmount: ds 1
 wCopyColDest: ds 2
 wCopyColData: ds 8*6
+wCopyColDataEnd: ds 1
+wCopyColDataAttr: ds 8*6
 
 wCopyGfxAmount: ds 1
 wCopyGfxDest: ds 2
@@ -52,7 +56,7 @@ wTestObjectX: dw
 wMenuOpen: db
 wMenuOption: db
 
-SECTION "Map Objects",WRAM0[$c400]
+SECTION "Map Objects",WRAM0[$c500]
 wMapObject0:
 .ysub: db
 .y: dw
@@ -63,7 +67,7 @@ wMapObject0:
 .sprite: db
 .count: db
 
-SECTION "vwf",WRAM0[$c500]
+SECTION "vwf",WRAM0[$c600]
 wVWFLetterNum:
     ds 1
 wVWFChar:
@@ -89,7 +93,7 @@ wVWFBuildArea2:
     ds 8
 wVWFBuildArea3:
     ds 8
-SECTION "vwfcopy",WRAM0[$c540]
+SECTION "vwfcopy",WRAM0[$c640]
 wVWFCopyArea:
 SECTION "palettes", WRAM0
 wBGPal:
