@@ -393,7 +393,7 @@ StartGame:
 MovePlayer:
     ld a, [wMenuOpen]
     and a
-    ret nz
+    jr nz, .stopmoving
     ld a, [H_JOY]
     swap a
     and %00001111
@@ -437,31 +437,31 @@ MoveObject:
     pop hl
     ld a, [wMoved]
     and a
-    jr nz, .moved
+    jr nz, .slowdown
     
     ld a, [hli]
     call MoveObjectTryDirection
     ld a, [wMoved]
     and a
-    jr nz, .moved
+    jr nz, .slowdown
     
     ld a, [hli]
     call MoveObjectTryDirection
     ld a, [wMoved]
     and a
-    jr nz, .moved
+    jr nz, .slowdown
     
     ld a, [wMapObject0+7]
     sub 1
     ret c
     ld [wMapObject0+7], a
-    ret
+    
+    jr .sprite
     
 .moved
     ;ld a, [wMapObject0+7]
     ;and a
     ;jr z, .dontanim
-    call AdvanceSpriteAnim
 ;.dontanim
     ld a, [wMapObject0+6]
     bit 4, a
@@ -472,9 +472,9 @@ MoveObject:
     inc a
     ld [hl], a
     cp 32
-    ret c
+    jr c, .sprite
     dec [hl]
-    ret
+    jr .sprite
 .slowdown
     ld a, [wMapObject0+7]
     sub 2
@@ -487,6 +487,9 @@ MoveObject:
     xor a
 .not0_
     ld [wMapObject0+7], a
+
+.sprite
+    call AdvanceSpriteAnim
     ret
 
 DirectionsToSpriteIndices:
