@@ -357,11 +357,10 @@ Start:
     ei
     halt
     
+    call DisableLCD
     ;call WaitForKey
     
     call ClearTilemap
-    call DisableLCD
-    call EnableLCD
     jp InitGame
 
 NewGameMenu:
@@ -374,10 +373,32 @@ NewGameMenu:
     dw StartGame
 
 InitGame:
-    call ClearTilemap
+    copy $9010, PesikLargeGfx
+    copy wBGPal, PesikLargePal
+    lda [wCopyPal], 1
+    call EnableLCD
+    
     printstatic $00, $0f, 1, 5, "Pesik@"
-    printstatic $10, $20, $11, 0, "Sanky 2015@"
-    printstatic $20, $20, 10, 4, "Do not distribute@"
+    printstatic $05, $20, $10, 0, "Code by Sanqui@"
+    printstatic $10, $20, $11, 0, "Concept by Behold3r@"
+    printstatic $20, $20, $0f, 4, "Do not distribute@"
+    
+    ld a, $01
+    ld de, 20-7
+    hlcoord 8, 2
+    ld c, 6
+.loopy
+    ld b, 7
+.loopx
+    ld [hli], a
+    inc a
+    dec b
+    jr nz, .loopx
+    add hl, de
+    dec c
+    jr nz, .loopy
+    
+    
     xor a
     ld [H_SCX], a
     ld [H_SCY], a
@@ -411,6 +432,11 @@ StartGame:
     copy $9c20, MenuTilemap1
     copy $9c40, MenuTilemap2
     copy $9c60, MenuTilemap3
+    lda [rVBK], 1
+    fillmemory $9c00, $87, $ff
+    xor a
+    ld [rVBK], a
+    
     ld b, 0
     ld c, 0
 .loadtilemaploop
@@ -817,7 +843,7 @@ NextDirections:
     db $0, $0, $0 ; f 1111 X down/up/left/right
 
 MovementSteps:
-    dw 2
+    dw 0
 x = 0.0
 rept 32
     ; DIV(x, 12.0)
@@ -829,7 +855,7 @@ x = x + 1.0
 endr
 
 MovementStepsDiag:
-    dw 2
+    dw 0
 x = 0.0
 rept 32
     dw     (DIV(SIN(MUL( x<<6, DIV(256.0, 32.0) )), 1.41421356237) >> 8)+1
@@ -1328,9 +1354,11 @@ IsSpriteAtWall:
     incdata TilesetGfx, "gfx/tileset.2bpp"
     incl TilesetPal, "gfx/tileset.pal"
 
-
     incdata PesikGfx, "gfx/pesik.interleave.2bpp"
     incl PesikPal, "gfx/pesik.interleave.pal"
+    
+    incdata PesikLargeGfx, "gfx/pesik_large.2bpp"
+    incl PesikLargePal, "gfx/pesik_large.pal"
 
 MenuIcons:
     INCBIN "gfx/menuicons.2bpp"
@@ -1627,6 +1655,34 @@ DoOWMenu:
     ret
 
 DefaultBGPal:
+    RGB 31, 31, 31
+    RGB 32/3 * 2, 30, 32/3 * 2
+    RGB 32/3, 18, 32/3
+    RGB 0, 0, 0, 0
+    RGB 31, 31, 31
+    RGB 32/3 * 2, 30, 32/3 * 2
+    RGB 32/3, 18, 32/3
+    RGB 0, 0, 0, 0
+    RGB 31, 31, 31
+    RGB 32/3 * 2, 30, 32/3 * 2
+    RGB 32/3, 18, 32/3
+    RGB 0, 0, 0, 0
+    RGB 31, 31, 31
+    RGB 32/3 * 2, 30, 32/3 * 2
+    RGB 32/3, 18, 32/3
+    RGB 0, 0, 0, 0
+    RGB 31, 31, 31
+    RGB 32/3 * 2, 30, 32/3 * 2
+    RGB 32/3, 18, 32/3
+    RGB 0, 0, 0, 0
+    RGB 31, 31, 31
+    RGB 32/3 * 2, 30, 32/3 * 2
+    RGB 32/3, 18, 32/3
+    RGB 0, 0, 0, 0
+    RGB 31, 31, 31
+    RGB 32/3 * 2, 30, 32/3 * 2
+    RGB 32/3, 18, 32/3
+    RGB 0, 0, 0, 0
     RGB 31, 31, 31
     RGB 32/3 * 2, 30, 32/3 * 2
     RGB 32/3, 18, 32/3
