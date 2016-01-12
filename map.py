@@ -11,4 +11,4 @@ for arg in argv[1:]:
     if len(map['layers']) >= 2:
         with open(arg.split('.')[0]+"_obj.bin", 'wb') as out:
             for obj in map['layers'][1]['objects']:
-                out.write(struct.pack("SS", obj['x']/8, obj['y']/8))
+                out.write(struct.pack("<HH", obj['x']/8, obj['y']/8))

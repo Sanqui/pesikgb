@@ -132,12 +132,14 @@ unhl: MACRO
 
 ; copy bc bytes of data from hl to de
 copy: MACRO
+if _NARG > 0
     ld de, \1
     ld hl, \2
 if _NARG == 3
     ld bc, \3
 else
     ld bc, \2End - \2
+endc
 endc
     call CopyData
     ENDM
@@ -334,6 +336,23 @@ ptr: MACRO
     db BANK(\1)
 ENDM
 
+bankswitch: MACRO
+    ld [$2000], a
+    ld [H_BANK], a
+ENDM
+
+ldptr: MACRO
+if _NARG == 1
+    ld hl, \1
+endc
+    ld a, [hli]
+    ld d, [hl]
+    ld e, a
+    inc hl
+    ld a, [hl]
+    ld l, e
+    ld h, d
+ENDM
 
 H_BANK EQU $FFE0
 

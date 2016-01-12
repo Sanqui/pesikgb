@@ -435,31 +435,8 @@ StartGame:
     copy $8b00, MenuIcons
     copy $8700, SelectorGfx
     
-    copy $9010, TilesetGfx,      $7f0
-    copy $8800, TilesetGfx+$7f0, $300
-    copy wBGPal, TilesetPal
-    
-    call VCopyPalForce
-    xor a
-    ld [wCopyPal], a
-    
-    lda [rVBK], 1
-    fillmemory $9c00, $87, $ff
-    xor a
-    ld [rVBK], a
-    
-    ld b, 0
-    ld c, 0
-.loadtilemaploop
-    push bc
-    call ScrollVert
-    call VCopyRow
-    pop bc
-    ld a, c
-    add 8
-    ld c, a
-    cp 160-8
-    jr c, .loadtilemaploop
+    ld hl, SnowyMap
+    call LoadMap
     
     ld hl, wMapObject0
     lda [hli], 0
@@ -482,7 +459,15 @@ StartGame:
     call DoOWMenu
     lda [H_SCY], [wCameraY]
     lda [H_SCX], [wCameraX]
+    
+    ld a, [H_JOYNEW]
+    bit START, a
+    jr z, .loop
+    call DisableLCD
+    ld hl, CaveMap
+    call LoadMap
     ;jpjoynew START, .return
+    call EnableLCD
     jr .loop
 
 MovePlayer:
@@ -879,7 +864,12 @@ AddAttributesForTileData:
     cp $ff
     ret z
     push hl
-    ld hl, TileAttributes
+    push af
+    lda l, [wTileAttributesPtr]
+    lda h, [wTileAttributesPtr+1]
+    ld a, [wTileAttributesPtr+2]
+    bankswitch
+    pop af
     add l
     ld l, a
     jr nc, .nc
@@ -968,7 +958,10 @@ ScrollVert:
     pop de
     pop hl
     shiftleft hl, 2
-    ld bc, Tilemap
+    lda c, [wTilemapPtr]
+    lda b, [wTilemapPtr+1]
+    ld a, [wTilemapPtr+2]
+    bankswitch
     add hl, bc
     lda c, [wCameraX]
     lda b, [wCameraX+1]
@@ -1027,7 +1020,10 @@ ScrollHor:
     pop de
     pop hl
     shiftleft hl, 2
-    ld bc, Tilemap
+    lda c, [wTilemapPtr]
+    lda b, [wTilemapPtr+1]
+    ld a, [wTilemapPtr+2]
+    bankswitch
     add hl, bc
     pop bc
     push hl
@@ -1210,7 +1206,10 @@ GetTileAt:
     lda b, [wCurX+1]
     shiftright bc, 3
     add hl, bc
-    ld bc, Tilemap
+    lda c, [wTilemapPtr]
+    lda b, [wTilemapPtr+1]
+    ld a, [wTilemapPtr+2]
+    bankswitch
     add hl, bc
     ld a, [hl] ; tile
     ret
@@ -1219,7 +1218,8 @@ CopyCollisionMapOfTile:
     ld l, a
     ld h, 0
     shiftleft hl, 3
-    ld bc, SnowyMask
+    lda c, [wTilesetMaskPtr]
+    lda b, [wTilesetMaskPtr+1]
     add hl, bc
 rept 8
     ld a, [hli]
@@ -1356,8 +1356,49 @@ IsSpriteAtWall:
     
     ret
 
-    incdata TilesetGfx, "gfx/tileset.2bpp"
-    incl TilesetPal, "gfx/tileset.pal"
+LoadMap:
+    ld de, wMapHeader
+    ld bc, wMapHeaderEnd-wMapHeader
+    copy
+    ;ptr TilesetGfx  TilesetPal  TilesetMask  TileAttributes  Tilemap
+    ldptr wTilesetGfxPtr
+    bankswitch
+    ld bc, $7f0
+    ld de, $9010
+    copy
+    ld bc, $300
+    ld de, $8800
+    copy
+    
+    ldptr wTilesetPalPtr
+    bankswitch
+    ld bc, 2*4
+    ld de, wBGPal
+    copy
+    
+    call VCopyPalForce
+    xor a
+    ld [wCopyPal], a
+    
+    lda [rVBK], 1
+    fillmemory $9c00, $87, $ff
+    xor a
+    ld [rVBK], a
+    
+    ld b, 0
+    ld c, 0
+.loadtilemaploop
+    push bc
+    call ScrollVert
+    call VCopyRow
+    pop bc
+    ld a, c
+    add 8
+    ld c, a
+    cp 160-8
+    jr c, .loadtilemaploop
+    ret
+
 
     incdata PesikGfx, "gfx/pesik.interleave.2bpp"
     incl PesikPal, "gfx/pesik.interleave.pal"
@@ -1384,7 +1425,7 @@ MenuTilemap3:
     db $e0, $e1, $00,   $e2, $e3, $00,   $e4, $e5, $00,   $e6, $e7, $00,   $e8, $e9, $00
 MenuTilemap3End
 
-TileAttributes:
+SnowyTileAttributes:
     db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
     db $00, $80, $80, $80, $80, $80, $80, $80, $00, $00, $00, $00, $00, $00, $00, $00
     db $00, $00, $00, $00, $80, $80, $80, $80, $00, $00, $00, $00, $00, $00, $00, $00
@@ -1413,7 +1454,7 @@ PlayerCollisionMask:
     
     db 0, 0, 0, 0, 0, 0, 0, 0 ; padding
 
-SnowyMask:
+SnowyTilesetMask:
     db 0, 0, 0, 0, 0, 0, 0, 0
     INCBIN "masks/snowy.1bpp"
 
@@ -1562,22 +1603,26 @@ DefaultOAMPal:
 DefaultOAMPalEnd
 
 SnowyMap:
-    ptr TilesetGfx
-    ptr TilesetPal
-    ptr SnowyMask
-    ptr Tilemap
+    ptr SnowyTilesetGfx
+    ptr SnowyTilesetPal
+    ptr SnowyTilesetMask
+    ptr SnowyTileAttributes
+    ptr SnowyTilemap
 
 CaveMap:
     ptr CaveTilesetGfx
     ptr CaveTilesetPal
     ptr CaveTilesetMask
+    ptr SnowyTileAttributes;CaveTileAttributes
     ptr CaveTilemap
 
-
 CaveTilesetMask:
+    db 0,0,0,0,0,0,0,0,0
+    INCBIN "masks/cave.1bpp"
+
 
 SECTION "map0", ROMX, BANK[$1]
-Tilemap:
+SnowyTilemap:
     INCBIN "maps/test.bin";, $0000, $4000
 ;SECTION "map1", ROMX, BANK[$2]
 ;    INCBIN "maps/test.bin", $4000, $4000
@@ -1591,9 +1636,13 @@ SECTION "cave map", ROMX
 CaveTilemap:
     INCBIN "maps/cave.bin"
 
+SECTION "data", ROMX
+    incdata CaveTilesetGfx, "gfx/tileset_ice.2bpp"
+    incl CaveTilesetPal, "gfx/tileset_ice.pal"
 
 
-
+    incdata SnowyTilesetGfx, "gfx/tileset.2bpp"
+    incl SnowyTilesetPal, "gfx/tileset.pal"
 
 
 

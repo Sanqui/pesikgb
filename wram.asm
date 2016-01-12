@@ -68,7 +68,15 @@ wMapObject0:
 .count: db
 
 
-SECTION "Map Data",WRAM0[$c600]
+SECTION "Map Data",WRAM0
+wMapHeader:
+wTilesetGfxPtr: ds 3
+wTilesetPalPtr: ds 3
+wTilesetMaskPtr: ds 3
+wTileAttributesPtr: ds 3
+wTilemapPtr: ds 3
+
+wMapHeaderEnd
 
 SECTION "vwf",WRAM0[$c600]
 wVWFLetterNum:
