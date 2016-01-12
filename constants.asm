@@ -329,6 +329,13 @@ endc
 endr
 ENDM
 
+ptr: MACRO
+    dw \1
+    db BANK(\1)
+ENDM
+
+
+H_BANK EQU $FFE0
 
 H_TIMER EQU $FFF0
 H_RNG1 EQU $FFF1

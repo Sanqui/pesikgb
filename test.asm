@@ -425,25 +425,24 @@ StartGame:
     frame2
     
     call DisableLCD
-    
-    copy $9010, TilesetGfx,      $7f0
-    copy $8800, TilesetGfx+$7f0, $300
-    copy wBGPal, TilesetPal
+    copy $9c00, MenuTilemap0
+    copy $9c20, MenuTilemap1
+    copy $9c40, MenuTilemap2
+    copy $9c60, MenuTilemap3
     copy $8000, PesikGfx, 16*6
     copy wOAMPal, PesikPal
     lda [wCopyPal], 1
     copy $8b00, MenuIcons
     copy $8700, SelectorGfx
     
+    copy $9010, TilesetGfx,      $7f0
+    copy $8800, TilesetGfx+$7f0, $300
+    copy wBGPal, TilesetPal
     
     call VCopyPalForce
     xor a
     ld [wCopyPal], a
     
-    copy $9c00, MenuTilemap0
-    copy $9c20, MenuTilemap1
-    copy $9c40, MenuTilemap2
-    copy $9c60, MenuTilemap3
     lda [rVBK], 1
     fillmemory $9c00, $87, $ff
     xor a
@@ -461,7 +460,6 @@ StartGame:
     ld c, a
     cp 160-8
     jr c, .loadtilemaploop
-    ;copy $9800, Tilemap
     
     ld hl, wMapObject0
     lda [hli], 0
@@ -1218,16 +1216,10 @@ GetTileAt:
     ret
 
 CopyCollisionMapOfTile:
-    ld hl, TileCollisions
-    add l
     ld l, a
-    jr nc, .nc
-    inc h
-.nc
-    ld l, [hl]
     ld h, 0
     shiftleft hl, 3
-    ld bc, TileCollisionMasks
+    ld bc, SnowyMask
     add hl, bc
 rept 8
     ld a, [hli]
@@ -1400,10 +1392,10 @@ TileAttributes:
     db $00, $00, $00, $00, $80, $80, $80, $80, $00, $00, $00, $00, $00, $00, $00, $00
     db $00, $00, $00, $00, $80, $80, $80, $80, $00, $00, $00, $00, $00, $00, $00, $00
     db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-    db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+    db $00, $00, $00, $00, $00, $80, $80, $80, $00, $00, $00, $00, $00, $00, $00, $00
     db $00, $80, $80, $80, $80, $80, $80, $80, $00, $00, $00, $00, $00, $00, $00, $00
     
-    db $00, $80, $80, $80, $80, $80, $80, $80, $00, $00, $00, $00, $00, $00, $00, $00
+    db $00, $80, $80, $80, $80, $80, $80, $80, $00, $80, $00, $00, $00, $00, $00, $00
     db $00, $80, $80, $80, $80, $80, $80, $80, $00, $00, $00, $00, $00, $00, $00, $00
     db $00, $80, $80, $80, $80, $80, $80, $80, $00, $00, $00, $00, $00, $00, $00, $00
 
@@ -1421,156 +1413,9 @@ PlayerCollisionMask:
     
     db 0, 0, 0, 0, 0, 0, 0, 0 ; padding
 
-TileCollisions:
-    db 0, 0, 0, 0, 0, 0, 0, 0, 4, 1, 5, 1, 0, 0, 0, 0
-    db 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 7, 0, 0, 0, 0, 0
-    db 0, 0,12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    db 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 1, 1, 1, 5, 0, 0
-    db 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 1, 1, 0, 0, 5, 0
-    db 0, 0, 0, 0, 0,14, 0, 0, 4, 0, 1, 1, 0, 0, 7, 0
-    db 0, 0, 0, 0, 0,13, 0, 0, 6, 6, 1, 1, 1, 7, 0, 0
-    db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    
-    db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-TileCollisionMasks:
-; 0 empty
-    db %00000000
-    db %00000000
-    db %00000000
-    db %00000000
-    db %00000000
-    db %00000000
-    db %00000000
-    db %00000000
-; 1 full
-    db %11111111
-    db %11111111
-    db %11111111
-    db %11111111
-    db %11111111
-    db %11111111
-    db %11111111
-    db %11111111
-; 2 round
-    db %00011000
-    db %00111100
-    db %01111110
-    db %11111111
-    db %11111111
-    db %01111110
-    db %00111100
-    db %00011000
-; 3 none yet
-    db %00000000
-    db %00000000
-    db %00000000
-    db %00000000
-    db %00000000
-    db %00000000
-    db %00000000
-    db %00000000
-; 4 bottom right
-    db %00011111
-    db %00111111
-    db %01111111
-    db %11111111
-    db %11111111
-    db %11111111
-    db %11111111
-    db %11111111
-; 5 bottom left
-    db %11111000
-    db %11111100
-    db %11111110
-    db %11111111
-    db %11111111
-    db %11111111
-    db %11111111
-    db %11111111
-; 6 top right
-    db %11111111
-    db %11111111
-    db %11111111
-    db %11111111
-    db %11111111
-    db %01111111
-    db %00111111
-    db %00011111
-; 7 top left
-    db %11111111
-    db %11111111
-    db %11111111
-    db %11111111
-    db %11111111
-    db %11111110
-    db %11111100
-    db %11111000
-; 8 bottom right diag
-    db %00000001
-    db %00000011
-    db %00000111
-    db %00001111
-    db %00011111
-    db %00111111
-    db %01111111
-    db %11111111
-; 9 top right diag
-    db %10000000
-    db %11000000
-    db %11100000
-    db %11110000
-    db %11111000
-    db %11111100
-    db %11111110
-    db %11111111
-; 10 bottom left diag
-    db %11111111
-    db %01111111
-    db %00111111
-    db %00011111
-    db %00001111
-    db %00000111
-    db %00000011
-    db %00000001
-; 11 bottom right diag
-    db %11111111
-    db %11111110
-    db %11111100
-    db %11111000
-    db %11110000
-    db %11100000
-    db %11000000
-    db %10000000
-; 12 bush bottom
-    db %11111111
-    db %11111111
-    db %01111110
-    db %00111100
-    db %00000000
-    db %00000000
-    db %00000000
-    db %00000000
-; 13 tree bottom
-    db %11111111
-    db %11111111
-    db %11111111
-    db %11111111
-    db %11111111
-    db %11111111
-    db %11111110
-    db %00000000
-; 14 tree trunk
-    db %00011111
-    db %00011111
-    db %00011111
-    db %00011111
-    db %00011111
-    db %00011111
-    db %00011111
-    db %00011111
+SnowyMask:
+    db 0, 0, 0, 0, 0, 0, 0, 0
+    INCBIN "masks/snowy.1bpp"
 
 
 DoOWMenu:
@@ -1716,10 +1561,35 @@ DefaultOAMPal:
     RGB 0, 0, 0, 0
 DefaultOAMPalEnd
 
+SnowyMap:
+    ptr TilesetGfx
+    ptr TilesetPal
+    ptr SnowyMask
+    ptr Tilemap
 
-SECTION "map", ROMX
-    incdata Tilemap, "maps/test.bin"
+CaveMap:
+    ptr CaveTilesetGfx
+    ptr CaveTilesetPal
+    ptr CaveTilesetMask
+    ptr CaveTilemap
 
+
+CaveTilesetMask:
+
+SECTION "map0", ROMX, BANK[$1]
+Tilemap:
+    INCBIN "maps/test.bin";, $0000, $4000
+;SECTION "map1", ROMX, BANK[$2]
+;    INCBIN "maps/test.bin", $4000, $4000
+;SECTION "map2", ROMX, BANK[$3]
+;    INCBIN "maps/test.bin", $8000, $4000
+;SECTION "map3", ROMX, BANK[$4]
+;    INCBIN "maps/test.bin", $c000, $4000
+
+
+SECTION "cave map", ROMX
+CaveTilemap:
+    INCBIN "maps/cave.bin"
 
 
 

@@ -67,6 +67,9 @@ wMapObject0:
 .sprite: db
 .count: db
 
+
+SECTION "Map Data",WRAM0[$c600]
+
 SECTION "vwf",WRAM0[$c600]
 wVWFLetterNum:
     ds 1
