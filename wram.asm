@@ -56,6 +56,8 @@ wTestObjectX: dw
 wMenuOpen: db
 wMenuOption: db
 
+wTmpOAMLow: db
+
 SECTION "Map Objects",WRAM0[$c500]
 wMapObject0:
 .ysub: db
@@ -66,6 +68,11 @@ wMapObject0:
 .step: db
 .sprite: db
 .count: db
+
+wMapObject1: ds 10
+wMapObject2: ds 10
+wMapObject3: ds 10
+
 
 
 SECTION "Map Data",WRAM0

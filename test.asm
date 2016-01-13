@@ -446,6 +446,30 @@ StartGame:
     lda [hli], 80+100+16
     lda [hli], 0
     
+    ld hl, wMapObject1
+    lda [hli], 0
+    lda [hli], 98
+    lda [hli], 1
+    lda [hli], 0
+    lda [hli], 196
+    lda [hli], 0
+    
+    ld hl, wMapObject2
+    lda [hli], 0
+    lda [hli], 106
+    lda [hli], 1
+    lda [hli], 0
+    lda [hli], 255
+    lda [hli], 0
+    
+    ld hl, wMapObject3
+    lda [hli], 0
+    lda [hli], 160
+    lda [hli], 1
+    lda [hli], 0
+    lda [hli], 255
+    lda [hli], 0
+    
     call EnableLCD
     
 .loop
@@ -1094,9 +1118,30 @@ SubCameraXAtDE:
 
 UpdateSprites:
     ;fillmemory W_OAM, 0, 4*$28
+    xor a
+    ld [wTmpOAMLow], a
     
+    ld de, wMapObject0
+    call .UpdateSprite
+    ld de, wMapObject1
+    call .UpdateSprite
+    ld de, wMapObject2
+    call .UpdateSprite
+    ;ld de, wMapObject3
+    ;call .UpdateSprite
+    ld h, W_OAM >> 8
+    ld a, [wTmpOAMLow]
+.clearloop
+    ld l, a
+    ld [hl], 144+16
+    ld a, l
+    add 4
+    cp $a0
+    jr c, .clearloop
+    ret
     
-    ld de, wMapObject0+1
+.UpdateSprite
+    inc de
     call SubCameraYAtDE
     ld a, h
     and a
@@ -1129,7 +1174,9 @@ UpdateSprites:
     sra a
     ld c, a
     
-    ld hl, W_OAM
+    ld h, W_OAM >> 8
+    ld a, [wTmpOAMLow]
+    ld l, a
     lda [hli], [wTmpSpriteY]
     lda [hli], [wTmpSpriteX]
     xor a
@@ -1154,13 +1201,14 @@ UpdateSprites:
     ld [hli], a
     ld a, b
     ld [hli], a
-    jr .end
+    
+    lda [wTmpOAMLow], l
+    ret
     
 .skip2
     inc de
     inc de
 .skip
-.end
     ret
 
 CameraTowardsSprite:
