@@ -418,6 +418,22 @@ InitGame:
     domenu NewGameMenu
     jr .here
 
+InitObject:
+    xor a
+    ld [hli], a
+    lda [hli], c
+    lda [hli], b
+    xor a
+    ld [hli], a
+    lda [hli], e
+    lda [hli], d
+    xor a
+    ld [hli], a
+    ld [hli], a
+    lda [hli], $80
+    lda [hli], $ff
+    ret
+
 StartGame:
     frame2
     call ClearTilemap
@@ -439,36 +455,24 @@ StartGame:
     call LoadMap
     
     ld hl, wMapObject0
-    lda [hli], 0
-    lda [hli], 20
-    lda [hli], 1
-    lda [hli], 0
-    lda [hli], 80+100+16
-    lda [hli], 0
+    ld bc, $0114
+    ld de, $00c4
+    call InitObject
     
     ld hl, wMapObject1
-    lda [hli], 0
-    lda [hli], 98
-    lda [hli], 1
-    lda [hli], 0
-    lda [hli], 196
-    lda [hli], 0
+    ld bc, $0150
+    ld de, $00f4
+    call InitObject
     
     ld hl, wMapObject2
-    lda [hli], 0
-    lda [hli], 106
-    lda [hli], 1
-    lda [hli], 0
-    lda [hli], 255
-    lda [hli], 0
+    ld bc, $0180
+    ld de, $00c4
+    call InitObject
     
     ld hl, wMapObject3
-    lda [hli], 0
-    lda [hli], 160
-    lda [hli], 1
-    lda [hli], 0
-    lda [hli], 255
-    lda [hli], 0
+    ld bc, $0200
+    ld de, $00ff
+    call InitObject
     
     call EnableLCD
     
@@ -655,16 +659,8 @@ HandleNewSpriteAnim:
     ld hl, wMapObject0+8
     cp [hl]
     ret z
+    or $80
     ld [hl], a
-    ld hl, PesikGfx
-    ld e, a
-    ld d, 0
-    ld bc, 16*6
-    xor a
-    ld [wCopyGfxDest], a
-    ld a, $80
-    ld [wCopyGfxDest+1], a
-    call ScheduleNewSprite
     ret
 
 ScheduleNewSprite:
@@ -1120,6 +1116,7 @@ UpdateSprites:
     ;fillmemory W_OAM, 0, 4*$28
     xor a
     ld [wTmpOAMLow], a
+    ld [wVisSpriteCount], a
     
     ld de, wMapObject0
     call .UpdateSprite
@@ -1164,14 +1161,25 @@ UpdateSprites:
     inc de
     inc de
     ld a, [de]
+    bit 7, a
+    jr z, .gfxnext
+    call .UpdateSpriteGfx
+    jr .gfxhandled
+.gfxnext
     inc de
-    and $80
-    rr a
-    rr a
-    ld b, a
     ld a, [de]
-    and %00001000
-    sra a
+    dec de
+    cp $ff
+    call z, .UpdateSpriteGfx
+.gfxhandled
+    
+    xor a
+    ld b, a
+    inc de
+    ld a, [de]
+    sla a
+    sla a
+    sla a
     ld c, a
     
     ld h, W_OAM >> 8
@@ -1179,7 +1187,7 @@ UpdateSprites:
     ld l, a
     lda [hli], [wTmpSpriteY]
     lda [hli], [wTmpSpriteX]
-    xor a
+    ld a, c
     ld [hli], a
     ld a, b
     ld [hli], a
@@ -1188,7 +1196,8 @@ UpdateSprites:
     ld a, [wTmpSpriteX]
     add 8
     ld [hli], a
-    ld a, 2
+    ld a, c
+    add 2
     ld [hli], a
     ld a, b
     ld [hli], a
@@ -1197,18 +1206,55 @@ UpdateSprites:
     ld a, [wTmpSpriteX]
     add 16
     ld [hli], a
-    ld a, 4
+    ld a, c
+    add 4
     ld [hli], a
     ld a, b
     ld [hli], a
     
     lda [wTmpOAMLow], l
+    ld a, [wVisSpriteCount]
+    inc a
+    ld [wVisSpriteCount], a
     ret
     
 .skip2
     inc de
     inc de
+    inc de
 .skip
+    inc de
+    inc de
+    inc de
+    ld a, $ff
+    ld [de], a
+    ret
+.UpdateSpriteGfx:
+    ld a, [de]
+    and $7f
+    ld [de], a
+    ld [wTmpSpriteIndex], a
+    inc de
+    ld a, [wVisSpriteCount]
+    ld [de], a
+    and $01
+    rrc a
+    
+    ld [wCopyGfxDest], a
+    ld a, [de]
+    srl a
+    or $80
+    ld [wCopyGfxDest+1], a
+    push de
+    push bc
+    ld bc, 16*6
+    ld hl, PesikGfx
+    lda e, [wTmpSpriteIndex]
+    ld d, 0
+    call ScheduleNewSprite
+    pop bc
+    pop de
+    dec de
     ret
 
 CameraTowardsSprite:

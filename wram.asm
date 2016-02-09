@@ -57,6 +57,8 @@ wMenuOpen: db
 wMenuOption: db
 
 wTmpOAMLow: db
+wTmpSpriteIndex: db
+wVisSpriteCount: db
 
 SECTION "Map Objects",WRAM0[$c500]
 wMapObject0:
@@ -67,7 +69,7 @@ wMapObject0:
 .dir: db
 .step: db
 .sprite: db
-.count: db
+.tileindex: db
 
 wMapObject1: ds 10
 wMapObject2: ds 10
