@@ -17,9 +17,10 @@
          "name":"Object Layer 1",
          "objects":[
                 {
-                 "height":6,
-                 "id":1,
-                 "name":"0",
+                 "gid":193,
+                 "height":8,
+                 "id":15,
+                 "name":"",
                  "properties":
                     {
 
@@ -27,9 +28,57 @@
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":14,
-                 "x":561,
-                 "y":401
+                 "width":8,
+                 "x":192.25,
+                 "y":368.5
+                }, 
+                {
+                 "gid":178,
+                 "height":8,
+                 "id":17,
+                 "name":"",
+                 "properties":
+                    {
+
+                    },
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":8,
+                 "x":560.333333333333,
+                 "y":408
+                }, 
+                {
+                 "gid":193,
+                 "height":8,
+                 "id":18,
+                 "name":"",
+                 "properties":
+                    {
+
+                    },
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":8,
+                 "x":236.333333333333,
+                 "y":356.333333333333
+                }, 
+                {
+                 "gid":193,
+                 "height":8,
+                 "id":19,
+                 "name":"",
+                 "properties":
+                    {
+
+                    },
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":8,
+                 "x":237.666666666667,
+                 "y":390.666666666667
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -38,7 +87,7 @@
          "x":0,
          "y":0
         }],
- "nextobjectid":2,
+ "nextobjectid":20,
  "orientation":"orthogonal",
  "properties":
     {
@@ -54,6 +103,21 @@
          "imagewidth":128,
          "margin":0,
          "name":"tileset",
+         "properties":
+            {
+
+            },
+         "spacing":0,
+         "tileheight":8,
+         "tilewidth":8
+        }, 
+        {
+         "firstgid":177,
+         "image":"icons.png",
+         "imageheight":128,
+         "imagewidth":128,
+         "margin":0,
+         "name":"icons",
          "properties":
             {
 

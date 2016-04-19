@@ -135,6 +135,10 @@ VCopyRow:
     dec b
     jr nz, .copyloop
     
+    ld a, [H_GBC]
+    and a
+    jr z, .notgbc
+    
     ld a, 1
     ld [rVBK], a
     lda b, [wCopyRowAmount]
@@ -159,6 +163,8 @@ VCopyRow:
     
     xor a
     ld [rVBK], a
+
+.notgbc
     
     ld a, [rLY]
     cp $90
@@ -194,6 +200,10 @@ VCopyCol:
     dec b
     jr nz, .copyloop
     
+    ld a, [H_GBC]
+    and a
+    jr z, .notgbc
+    
     ld a, 1
     ld [rVBK], a
     lda b, [wCopyColAmount]
@@ -221,6 +231,8 @@ VCopyCol:
     
     xor a
     ld [rVBK], a
+
+.notgbc
     
     ld a, [rLY]
     cp $90
@@ -286,6 +298,15 @@ INCLUDE "vwf.asm"
 
 Start:
     di
+    cp $11
+    jr nz, .notgbc
+    ld a, 1
+    ld [H_GBC], a
+    jr .doneconsole
+.notgbc
+    xor a
+    ld [H_GBC], a
+.doneconsole
     
     ; palettes
     ld a, %11100100
@@ -330,8 +351,8 @@ Start:
 .loop2
     ld a, 0
     ld [hli], a
-    ld a, h
-    cp $00
+    ld a, l
+    cp $fe
     jr nz, .loop2
     
     pop af
