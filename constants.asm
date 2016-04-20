@@ -332,8 +332,11 @@ endr
 ENDM
 
 ptr: MACRO
+rept _NARG
     dw \1
     db BANK(\1)
+shift
+endr
 ENDM
 
 bankswitch: MACRO

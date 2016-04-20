@@ -58,22 +58,29 @@ wMenuOption: db
 
 wTmpOAMLow: db
 wTmpSpriteIndex: db
-wVisSpriteCount: db
+;wVisSpriteCount: db
+
+wTmpMapObjPtr: ds 2
+wMapObjectsLeft: ds 1
 
 SECTION "Map Objects",WRAM0[$c500]
-wMapObject0:
-.ysub: db
-.y: dw
-.xsub: db
-.x: dw
-.dir: db
-.step: db
-.sprite: db
-.tileindex: db
+wMapObject:
+.ysub: ds 1
+.y: ds 2
+.xsub: ds 1
+.x: ds 2
+.dir: ds 1
+.step: ds 1
+.sprite: ds 1
+.tileindex: ds 1
+ds 6
+wMapObjectEnd
 
-wMapObject1: ds 10
-wMapObject2: ds 10
-wMapObject3: ds 10
+wMapObject0: ds 16
+
+rept 32
+    ds 16
+endr
 
 
 
@@ -84,10 +91,11 @@ wTilesetPalPtr: ds 3
 wTilesetMaskPtr: ds 3
 wTileAttributesPtr: ds 3
 wTilemapPtr: ds 3
-
 wMapHeaderEnd
 
-SECTION "vwf",WRAM0[$c600]
+wMapObjects: ds 1
+
+SECTION "vwf",WRAM0[$c800]
 wVWFLetterNum:
     ds 1
 wVWFChar:
@@ -113,7 +121,7 @@ wVWFBuildArea2:
     ds 8
 wVWFBuildArea3:
     ds 8
-SECTION "vwfcopy",WRAM0[$c640]
+SECTION "vwfcopy",WRAM0[$c840]
 wVWFCopyArea:
 SECTION "palettes", WRAM0
 wBGPal:

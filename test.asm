@@ -229,25 +229,14 @@ StartGame:
     ld hl, SnowyMap
     call LoadMap
     
-    ld hl, wMapObject0
-    ld bc, $0114
-    ld de, $00c4
-    call InitObject
+    ld de, wMapObject0
+    ld hl, SnowyObjects
+    ld a, BANK(SnowyObjects)
+    bankswitch
+    ld bc, SnowyObjectsEnd-SnowyObjects
+    copy
     
-    ld hl, wMapObject1
-    ld bc, $0150
-    ld de, $00f4
-    call InitObject
-    
-    ld hl, wMapObject2
-    ld bc, $0180
-    ld de, $00c4
-    call InitObject
-    
-    ld hl, wMapObject3
-    ld bc, $0200
-    ld de, $00ff
-    call InitObject
+    lda [wMapObjects],  3
     
     call EnableLCD
     
@@ -273,6 +262,24 @@ StartGame:
     call EnableLCD
     jr .loop
 
+CopyObjectToBuffer:
+    lda [wTmpMapObjPtr], l
+    lda [wTmpMapObjPtr+1], h
+    ld de, wMapObject
+    ld bc, wMapObjectEnd-wMapObject
+    copy
+    ld de, wMapObject
+    ret
+
+RestoreObjectFromBuffer:
+    ld hl, wMapObject
+    lda e, [wTmpMapObjPtr]
+    lda d, [wTmpMapObjPtr+1]
+    ld bc, wMapObjectEnd-wMapObject
+    copy
+    ret
+    
+
 INCLUDE "code/movement.asm"
 INCLUDE "code/camera.asm"
 
@@ -280,16 +287,21 @@ UpdateSprites:
     ;fillmemory W_OAM, 0, 4*$28
     xor a
     ld [wTmpOAMLow], a
-    ld [wVisSpriteCount], a
     
-    ld de, wMapObject0
+    lda [wMapObjectsLeft], [wMapObjects]
+    ld hl, wMapObject0
+.loop
     call .UpdateSprite
-    ld de, wMapObject1
-    call .UpdateSprite
-    ld de, wMapObject2
-    call .UpdateSprite
-    ;ld de, wMapObject3
-    ;call .UpdateSprite
+    lda l, [wTmpMapObjPtr]
+    lda h, [wTmpMapObjPtr+1]
+    ld bc, wMapObjectEnd-wMapObject
+    add hl, bc
+    ld a, [wMapObjectsLeft]
+    dec a
+    ld [wMapObjectsLeft], a
+    jr nz, .loop
+    
+    
     ld h, W_OAM >> 8
     ld a, [wTmpOAMLow]
 .clearloop
@@ -302,6 +314,7 @@ UpdateSprites:
     ret
     
 .UpdateSprite
+    call CopyObjectToBuffer
     inc de
     call SubCameraYAtDE
     ld a, h
@@ -333,7 +346,7 @@ UpdateSprites:
     inc de
     ld a, [de]
     dec de
-    cp $ff
+    cp $ff ; naaaaaaaaaaaaaaah XXX 
     call z, .UpdateSpriteGfx
 .gfxhandled
     
@@ -377,9 +390,7 @@ UpdateSprites:
     ld [hli], a
     
     lda [wTmpOAMLow], l
-    ld a, [wVisSpriteCount]
-    inc a
-    ld [wVisSpriteCount], a
+    call RestoreObjectFromBuffer
     ret
     
 .skip2
@@ -399,16 +410,18 @@ UpdateSprites:
     ld [de], a
     ld [wTmpSpriteIndex], a
     inc de
-    ld a, [wVisSpriteCount]
-    ld [de], a
-    and $01
-    rrc a
     
-    ld [wCopyGfxDest], a
     ld a, [de]
-    srl a
+    and $0f
+    swap a
+    ld [wCopyGfxDest], a
+    
+    ld a, [de]
+    and $f0
+    swap a
     or $80
     ld [wCopyGfxDest+1], a
+    
     push de
     push bc
     ld bc, 16*6
@@ -464,6 +477,8 @@ LoadMap:
     jr c, .loadtilemaploop
     ret
 
+SpriteGraphics:
+    ptr PesikGfx, PesikPal
 
     incdata PesikGfx, "gfx/pesik.interleave.2bpp"
     incl PesikPal, "gfx/pesik.interleave.pal"
@@ -708,8 +723,8 @@ SECTION "data", ROMX
 
     incdata SnowyTilesetGfx, "gfx/tileset.2bpp"
     incl SnowyTilesetPal, "gfx/tileset.pal"
-
-
+    
+    incdata SnowyObjects, "maps/test_obj.bin"
 
 
 
